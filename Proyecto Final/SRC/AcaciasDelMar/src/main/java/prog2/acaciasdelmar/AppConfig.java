@@ -17,8 +17,8 @@ import org.springframework.web.servlet.view.JstlView;
 @EnableWebMvc
 public class AppConfig implements WebMvcConfigurer {
     
-    
-    public void addResourceHabdlers(final ResourceHandlerRegistry reg){
+    @Override
+    public void addResourceHandlers(final ResourceHandlerRegistry reg){
         reg.addResourceHandler("/resources/**").addResourceLocations("/resources/");
     }
     
@@ -35,13 +35,13 @@ public class AppConfig implements WebMvcConfigurer {
     public String getDBName() {return "acacias_del_mar";}
     
     @Bean(name = "dbURL")
-    public String getDBURL() {return "127.0.0.1";}
+    public String getDBURL() {return "127.0.0.1:3306";}
     
     @Bean(name = "dbUser")
-    public String getDBUser() {return "";}
+    public String getDBUser() {return "root";}
     
     @Bean(name = "dbPswd")
-    public String getDBPswd() {return "";}
+    public String getDBPswd() {return "102401";}
     
     
 }

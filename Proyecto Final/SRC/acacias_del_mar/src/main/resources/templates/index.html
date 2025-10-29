@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Acacias del mar</title>
+        <link rel="stylesheet" th:href="@{/css/styles.css}">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+    </head>
+    <body>
+        <div class="container">
+            <h1>📇 Agenda de Contactos</h1>
+            <p class="subtitle">Sistema de gestión de contactos con Spring Boot e Hibernate</p>
+
+            <div class="table-container">
+                <div id="loadingMessage" class="loading">Cargando tipos de vehiculos...</div>
+                <table id="contactosTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Denominacion</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contactosBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+            <script>
+                const API_URL = '/acaciasDelMar/api/tipoVehiculos';
+                let currentDniToDelete = null;
+                let allContactos = [];
+
+                // Cargar contactos al iniciar
+                document.addEventListener('DOMContentLoaded', () => {
+                    cargarContactos();
+
+                    // Búsqueda en tiempo real
+//                    document.getElementById('searchInput').addEventListener('input', buscarContactos);
+//                    document.getElementById('searchType').addEventListener('change', buscarContactos);
+                });
+
+                async function cargarContactos() {
+                    try {
+                        const response = await fetch(API_URL);
+                        if (!response.ok)
+                            throw new Error('Error al cargar contactos');
+
+                        allContactos = await response.json();
+                        mostrarContactos(allContactos);
+                    } catch (error) {
+                        console.error('Error:', error);
+                        showAlert('Error al cargar los contactos', 'danger');
+                    }
+                }
+
+                function mostrarContactos(contactos) {
+                    const tbody = document.getElementById('contactosBody');
+                    const table = document.getElementById('contactosTable');
+                    const loading = document.getElementById('loadingMessage');
+                    const noResults = document.getElementById('noResultsMessage');
+
+                    loading.style.display = 'none';
+
+                    if (contactos.length === 0) {
+                        table.style.display = 'none';
+                        noResults.style.display = 'block';
+                        return;
+                    }
+
+                    noResults.style.display = 'none';
+                    table.style.display = 'table';
+
+                    tbody.innerHTML = contactos.map(contacto => `
+                    <tr>
+                        <td>${contacto.denominacion}</td>
+                        <td class="actions">
+                            <button class="btn btn-edit">✏️ Editar</button>
+                            <button class="btn btn-delete">🗑️ Eliminar</button>
+                        </td>
+                    </tr>
+                    `).join('');
+                }
+            </script>
+    </body>
+</html>

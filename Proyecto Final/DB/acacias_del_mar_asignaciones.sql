@@ -1,5 +1,3 @@
-CREATE DATABASE  IF NOT EXISTS `acacias_del_mar` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
-USE `acacias_del_mar`;
 -- MySQL dump 10.13  Distrib 8.0.24, for Win64 (x86_64)
 --
 -- Host: localhost    Database: acacias_del_mar
@@ -25,15 +23,15 @@ DROP TABLE IF EXISTS `asignaciones`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `asignaciones` (
-  `id_asignacion` int NOT NULL,
+  `id_asignacion` int NOT NULL AUTO_INCREMENT,
   `id_vehiculo` int NOT NULL,
   `id_garage` int NOT NULL,
   `fecha_asignacion` date DEFAULT NULL,
   PRIMARY KEY (`id_asignacion`),
   KEY `asignacion_vehiculo_idx` (`id_vehiculo`),
   KEY `asignacion_garage_idx` (`id_garage`),
-  CONSTRAINT `asignacion_garage` FOREIGN KEY (`id_garage`) REFERENCES `garages` (`id_garage`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `asignacion_vehiculo` FOREIGN KEY (`id_vehiculo`) REFERENCES `vehiculos` (`id_vehiculo`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `asignacion_garage` FOREIGN KEY (`id_garage`) REFERENCES `garages` (`id_garage`),
+  CONSTRAINT `asignacion_vehiculo` FOREIGN KEY (`id_vehiculo`) REFERENCES `vehiculos` (`id_vehiculo`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -55,4 +53,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-10-23 14:51:49
+-- Dump completed on 2025-10-30  9:23:27

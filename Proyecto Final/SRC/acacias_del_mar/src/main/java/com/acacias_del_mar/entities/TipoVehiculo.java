@@ -14,11 +14,12 @@ import lombok.*;
 public class TipoVehiculo {
     @Id
     @Column(name = "id_tipo_vehiculo", nullable = false)
-    private Integer IdTipoVehiculo;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer idTipoVehiculo;
     
     @Column(name = "denominacion",nullable = false)
     @NotNull(message = "La denominacion no puede ser nula")
     @Max(value=45, message = "Nombre demasiado extenso")
-    private String Denominacion; 
+    private String denominacion; 
     
 }

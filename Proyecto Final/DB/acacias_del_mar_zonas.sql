@@ -1,5 +1,3 @@
-CREATE DATABASE  IF NOT EXISTS `acacias_del_mar` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
-USE `acacias_del_mar`;
 -- MySQL dump 10.13  Distrib 8.0.24, for Win64 (x86_64)
 --
 -- Host: localhost    Database: acacias_del_mar
@@ -25,14 +23,14 @@ DROP TABLE IF EXISTS `zonas`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `zonas` (
-  `id_zona` int NOT NULL,
+  `id_zona` int NOT NULL AUTO_INCREMENT,
   `letra` char(1) DEFAULT NULL,
   `id_tipo_vehiculo` int DEFAULT NULL,
   `profundidad` int DEFAULT NULL,
   `ancho` int DEFAULT NULL,
   PRIMARY KEY (`id_zona`),
   KEY `zona_tipo_vehiculo_idx` (`id_tipo_vehiculo`),
-  CONSTRAINT `zona_tipo_vehiculo` FOREIGN KEY (`id_tipo_vehiculo`) REFERENCES `tipos_vehiculo` (`id_tipo_vehiculo`) ON UPDATE CASCADE
+  CONSTRAINT `zona_tipo_vehiculo` FOREIGN KEY (`id_tipo_vehiculo`) REFERENCES `tipos_vehiculo` (`id_tipo_vehiculo`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -54,4 +52,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-10-23 14:51:49
+-- Dump completed on 2025-10-30  9:23:28

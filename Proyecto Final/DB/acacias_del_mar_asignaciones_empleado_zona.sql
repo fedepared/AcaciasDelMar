@@ -1,5 +1,3 @@
-CREATE DATABASE  IF NOT EXISTS `acacias_del_mar` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
-USE `acacias_del_mar`;
 -- MySQL dump 10.13  Distrib 8.0.24, for Win64 (x86_64)
 --
 -- Host: localhost    Database: acacias_del_mar
@@ -25,14 +23,14 @@ DROP TABLE IF EXISTS `asignaciones_empleado_zona`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `asignaciones_empleado_zona` (
-  `id_asignacion_empleado_zona` int NOT NULL,
+  `id_asignacion_empleado_zona` int NOT NULL AUTO_INCREMENT,
   `id_empleado` int NOT NULL,
   `id_zona` int NOT NULL,
   PRIMARY KEY (`id_asignacion_empleado_zona`),
   KEY `asignacion_empleado_idx` (`id_empleado`),
   KEY `asignacion_zona_idx` (`id_zona`),
-  CONSTRAINT `asignacion_empleado` FOREIGN KEY (`id_empleado`) REFERENCES `empleados` (`id_empleados`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `asignacion_zona` FOREIGN KEY (`id_zona`) REFERENCES `zonas` (`id_zona`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `asign_e_z_empleado` FOREIGN KEY (`id_empleado`) REFERENCES `empleados` (`id_empleado`),
+  CONSTRAINT `asign_e_z_zona` FOREIGN KEY (`id_zona`) REFERENCES `zonas` (`id_zona`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -54,4 +52,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-10-23 14:51:49
+-- Dump completed on 2025-10-30  9:23:27

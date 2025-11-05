@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Registro</title></head>
+<body>
+    <h2>Registro de Nuevo Usuario</h2>
+
+    <div th:if="${registroError}" style="color: red;" th:text="${registroError}"></div>
+
+    <form th:action="@{/register}" th:object="${usuarioDTO}" method="post">
+        <div>
+            <label>Usuario:</label>
+            <input type="text" th:field="*{nombre}" />
+            <span style="color: red;" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></span>
+        </div>
+        <div>
+            <label>Contraseña (min 8 caracteres):</label>
+            <input type="password" th:field="*{password}" />
+            <span style="color: red;" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+        </div>
+        <div>
+            <label>Tipo (ej: ADMIN, EMPLEADO):</label> 
+            <input type="text" th:field="*{tipoUsuario}" />
+            <span style="color: red;" th:if="${#fields.hasErrors('tipoUsuario')}" th:errors="*{tipoUsuario}"></span>
+        </div>
+        <div>
+            <button type="submit">Registrar</button>
+        </div>
+    </form>
+</body>
+</html>

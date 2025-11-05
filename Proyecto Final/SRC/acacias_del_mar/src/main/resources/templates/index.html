@@ -49,7 +49,7 @@
                         mostrarContactos(allContactos);
                     } catch (error) {
                         console.error('Error:', error);
-                        showAlert('Error al cargar los contactos', 'danger');
+                        
                     }
                 }
 
@@ -57,17 +57,17 @@
                     const tbody = document.getElementById('contactosBody');
                     const table = document.getElementById('contactosTable');
                     const loading = document.getElementById('loadingMessage');
-                    const noResults = document.getElementById('noResultsMessage');
+//                    const noResults = document.getElementById('noResultsMessage');
 
                     loading.style.display = 'none';
 
                     if (contactos.length === 0) {
                         table.style.display = 'none';
-                        noResults.style.display = 'block';
+//                        noResults.style.display = 'block';
                         return;
                     }
 
-                    noResults.style.display = 'none';
+//                    noResults.style.display = 'none';
                     table.style.display = 'table';
 
                     tbody.innerHTML = contactos.map(contacto => `

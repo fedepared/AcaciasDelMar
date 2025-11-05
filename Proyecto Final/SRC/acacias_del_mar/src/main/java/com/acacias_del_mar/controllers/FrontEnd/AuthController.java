@@ -1,4 +1,4 @@
-package com.acacias_del_mar.controllers.BackEnd;
+package com.acacias_del_mar.controllers.FrontEnd;
 
 import com.acacias_del_mar.DTOs.RegistroDTO;
 import com.acacias_del_mar.services.Usuario.UsuarioService;

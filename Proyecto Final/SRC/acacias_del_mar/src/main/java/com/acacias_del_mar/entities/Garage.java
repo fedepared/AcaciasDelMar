@@ -1,5 +1,7 @@
 package com.acacias_del_mar.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -10,7 +12,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * @Data: Genera getters, setters, toString(), etc.
@@ -22,6 +26,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "garages")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Garage {
 
     @Id
@@ -50,5 +55,8 @@ public class Garage {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_zona")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @JsonBackReference
     private Zona zona; // <-- Mapeamos el objeto completo, no solo el ID
 }

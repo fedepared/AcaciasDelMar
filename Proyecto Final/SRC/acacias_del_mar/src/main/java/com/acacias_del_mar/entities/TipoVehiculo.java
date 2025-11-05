@@ -1,5 +1,6 @@
 package com.acacias_del_mar.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -10,7 +11,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class TipoVehiculo {
     @Id
     @Column(name = "id_tipo_vehiculo", nullable = false)

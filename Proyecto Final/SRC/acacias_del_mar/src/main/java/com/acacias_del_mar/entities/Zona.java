@@ -15,6 +15,9 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -23,6 +26,9 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 @Table(name = "zonas")
+
+//para ignorar el lazy loading y los problemas de relaciones many to one
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Zona {
     
     @Id
@@ -32,7 +38,7 @@ public class Zona {
 
     
     @Column(name = "letra", length = 1)
-    private String letra;
+    private char letra;
 
     
     @Column(name = "profundidad")
@@ -64,7 +70,7 @@ public class Zona {
     @EqualsAndHashCode.Exclude
     //Las anotaciones @ToString.Exclude y @EqualsAndHashCode.Exclude 
     //es para que Lombok ignore estos campos al generar esos métodos, rompiendo el ciclo infinito.
-    
+    @JsonManagedReference
     private Set<Garage> garages = new HashSet<>();
 
 }

@@ -18,7 +18,7 @@ public class Usuario {
     private Integer idUsuario;
     
     @Column(name = "nombre",nullable = true)
-    @Max(value=15, message = "Nombre demasiado extenso")
+    @Size(max=15, message = "Nombre demasiado extenso (max 15 caracteres)")
     private String nombre; 
     
     @Column(name = "pass",nullable = false,length=128)
@@ -26,8 +26,9 @@ public class Usuario {
     
     @Enumerated(EnumType.STRING)
     @Column(name = "tipo_usuario",nullable = false)
-    @Max(value=15, message = "tipo de usuario demasiado largo")
+//    @Max(value=15, message = "tipo de usuario demasiado largo")
     private TipoUsuario tipoUsuario; 
 }
+
 
 

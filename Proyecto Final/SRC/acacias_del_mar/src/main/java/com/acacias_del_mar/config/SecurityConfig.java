@@ -2,8 +2,10 @@ package com.acacias_del_mar.config;
 
 import com.acacias_del_mar.repositories.UsuarioRepository; 
 import com.acacias_del_mar.entities.Usuario; 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -15,8 +17,12 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
     
+    
+    @Autowired
+    private CustomAuthenticationSuccessHandler successHandler;
     //Codifica contraseñas
     @Bean
     public PasswordEncoder passwordEncoder(){
@@ -56,7 +62,7 @@ public class SecurityConfig {
         .formLogin(form -> form
                 .loginPage("/login")//url de login
                 .loginProcessingUrl("/login-process") //a donde va el login
-                .defaultSuccessUrl("/home") //a donde va despues de logearse correctamente 
+                .successHandler(successHandler) //a donde va despues de logearse correctamente 
                 .failureUrl("/login?error=true") //a donde va si falla
                 .permitAll() //la pagina de login es visible para todos
         )
@@ -65,7 +71,9 @@ public class SecurityConfig {
                 logout.logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout=true")
                 .permitAll()  
-        );
+        )
+        .csrf(csrf -> csrf.disable()) //deshabilitarlo para produ
+        ;
         
         return http.build();
     }

@@ -13,6 +13,6 @@ public class RegistroDTO {
     @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
     private String password;
     
-    @NotBlank(message = "El tipo de usuario es obligatorio")
+    
     private TipoUsuario tipoUsuario;
 }

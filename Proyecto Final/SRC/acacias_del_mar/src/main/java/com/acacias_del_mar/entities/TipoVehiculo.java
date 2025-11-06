@@ -11,7 +11,6 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class TipoVehiculo {
     @Id
     @Column(name = "id_tipo_vehiculo", nullable = false)

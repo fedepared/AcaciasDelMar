@@ -27,8 +27,6 @@ import java.util.Set;
 @Entity
 @Table(name = "zonas")
 
-//para ignorar el lazy loading y los problemas de relaciones many to one
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Zona {
     
     @Id
@@ -70,7 +68,6 @@ public class Zona {
     @EqualsAndHashCode.Exclude
     //Las anotaciones @ToString.Exclude y @EqualsAndHashCode.Exclude 
     //es para que Lombok ignore estos campos al generar esos métodos, rompiendo el ciclo infinito.
-    @JsonManagedReference
     private Set<Garage> garages = new HashSet<>();
 
 }

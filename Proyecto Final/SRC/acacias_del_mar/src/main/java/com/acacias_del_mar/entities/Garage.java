@@ -26,7 +26,6 @@ import lombok.ToString;
 @NoArgsConstructor
 @Entity
 @Table(name = "garages")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Garage {
 
     @Id
@@ -57,6 +56,5 @@ public class Garage {
     @JoinColumn(name = "id_zona")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    @JsonBackReference
     private Zona zona; // <-- Mapeamos el objeto completo, no solo el ID
 }

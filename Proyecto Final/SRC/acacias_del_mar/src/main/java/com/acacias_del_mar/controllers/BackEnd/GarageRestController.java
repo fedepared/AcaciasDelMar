@@ -21,12 +21,12 @@ public class GarageRestController {
     private GarageService garageService;
 
     @GetMapping
-    public ResponseEntity<List<Garage>> obtenerTodos() {
+    public ResponseEntity<List<GarageDTO>> obtenerTodos() {
         return ResponseEntity.ok(garageService.obtenerTodos());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Garage> obtenerPorId(@PathVariable Integer id) {
+    public ResponseEntity<GarageDTO> obtenerPorId(@PathVariable Integer id) {
         return garageService.obtenerPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -35,7 +35,7 @@ public class GarageRestController {
     @PostMapping
     public ResponseEntity<?> crearGarage(@Valid @RequestBody GarageDTO garageDTO) {
         try {
-            Garage garageCreado = garageService.crearGarage(garageDTO);
+            GarageDTO garageCreado = garageService.crearGarage(garageDTO);
             return new ResponseEntity<>(garageCreado, HttpStatus.CREATED);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -45,7 +45,7 @@ public class GarageRestController {
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizarGarage(@PathVariable Integer id, @Valid @RequestBody GarageDTO garageDTO) {
         try {
-            Garage garageActualizado = garageService.actualizarGarage(id, garageDTO);
+            GarageDTO garageActualizado = garageService.actualizarGarage(id, garageDTO);
             return ResponseEntity.ok(garageActualizado);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);

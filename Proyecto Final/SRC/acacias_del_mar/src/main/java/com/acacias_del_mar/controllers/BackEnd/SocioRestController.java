@@ -21,12 +21,12 @@ public class SocioRestController {
     private SocioService socioService;
     
     @GetMapping
-    public ResponseEntity<List<Socio>> obtenerTodos(){
+    public ResponseEntity<List<SocioDTO>> obtenerTodos(){
         return ResponseEntity.ok(socioService.obtenerTodosLosSocios());
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<Socio> obtenerPorId(@PathVariable Integer id)
+    public ResponseEntity<SocioDTO> obtenerPorId(@PathVariable Integer id)
     {
         return socioService.obtenerSocioPorId(id)
                 .map(socio -> ResponseEntity.ok(socio))
@@ -37,7 +37,7 @@ public class SocioRestController {
     public ResponseEntity<?> crearSocio(@Valid @RequestBody SocioDTO socioDTO)
     {
         try{
-            Socio socioCreado = socioService.crearSocio(socioDTO);
+            SocioDTO socioCreado = socioService.crearSocio(socioDTO);
             return new ResponseEntity<>(socioCreado, HttpStatus.CREATED);
         }catch(RuntimeException e)
         {
@@ -49,7 +49,7 @@ public class SocioRestController {
     public ResponseEntity<?> actualizarSocio(@PathVariable Integer id, @Valid @RequestBody SocioDTO socioDTO)
     {
         try{
-            Socio socioActualizado = socioService.actualizarSocio(id, socioDTO);
+            SocioDTO socioActualizado = socioService.actualizarSocio(id, socioDTO);
             return ResponseEntity.ok(socioActualizado);
         }catch(RuntimeException e)
         {

@@ -4,11 +4,13 @@
  */
 package com.acacias_del_mar.services.Socio;
 
+import com.acacias_del_mar.DTOs.EntityMapper;
 import com.acacias_del_mar.DTOs.SocioDTO;
 import com.acacias_del_mar.entities.Socio;
 import com.acacias_del_mar.repositories.SocioRepository;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,50 +22,49 @@ public class SocioServiceImpl implements SocioService {
 
     @Autowired
     private SocioRepository socioRepository;
+    @Autowired
+    private EntityMapper mapper;
     
     @Override
     @Transactional(readOnly = true)
-    public List<Socio> obtenerTodosLosSocios() {
-        return socioRepository.findAll();
+    public List<SocioDTO> obtenerTodosLosSocios() {
+        return socioRepository.findAll().stream()
+                .map(mapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Socio> obtenerSocioPorId(Integer id) {
-        return socioRepository.findById(id);
+    public Optional<SocioDTO> obtenerSocioPorId(Integer id) {
+        return socioRepository.findById(id)
+                .map(mapper::toResponseDTO);
     }
 
     @Override
     @Transactional
-    public Socio crearSocio(SocioDTO socioDTO) {
+    public SocioDTO crearSocio(SocioDTO socioDTO) {
         if(socioRepository.existsByNombreAndApellido(socioDTO.getNombre(), socioDTO.getApellido()))
         {
             throw new RuntimeException("Error: ese socio ya existe");
         }
         
-        Socio nuevoSocio = new Socio();
-        nuevoSocio.setNombre(socioDTO.getNombre());
-        nuevoSocio.setApellido(socioDTO.getNombre());
-        nuevoSocio.setDireccion(socioDTO.getDireccion());
-        nuevoSocio.setTelefono(socioDTO.getTelefono());
-        nuevoSocio.setFechaDeIngreso(socioDTO.getFechaDeIngreso());
-        
-        return socioRepository.save(nuevoSocio);
+        Socio nuevoSocio = mapper.toEntity(socioDTO);
+        Socio guardado = socioRepository.save(nuevoSocio);
+        return mapper.toResponseDTO(guardado);
         
     }
 
     @Override
-    public Socio actualizarSocio(Integer id, SocioDTO socioDTO) {
+    @Transactional
+    public SocioDTO actualizarSocio(Integer id, SocioDTO socioDTO) {
         Socio socioDb = socioRepository.findById(id)
                 .orElseThrow(()-> new RuntimeException("Error: Socio no encontrado"));
         
-        socioDb.setNombre(socioDTO.getNombre());
-        socioDb.setApellido(socioDTO.getNombre());
-        socioDb.setDireccion(socioDTO.getDireccion());
-        socioDb.setTelefono(socioDTO.getTelefono());
-        socioDb.setFechaDeIngreso(socioDTO.getFechaDeIngreso());
+        mapper.updateEntityFromDto(socioDTO, socioDb);
         
-        return socioRepository.save(socioDb);
+        Socio actualizado = socioRepository.save(socioDb);
+        
+        return mapper.toResponseDTO(actualizado);
         
         
     }

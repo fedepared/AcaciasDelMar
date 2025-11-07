@@ -8,6 +8,7 @@ import java.time.LocalDate;
 @Data
 public class CompraGarageDTO {
 
+    private Integer idCompraGarage;
     @NotNull(message = "El ID de socio es obligatorio")
     private Integer idSocio;
 

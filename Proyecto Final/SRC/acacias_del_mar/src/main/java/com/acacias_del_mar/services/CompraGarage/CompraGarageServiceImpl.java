@@ -1,6 +1,7 @@
 package com.acacias_del_mar.services.CompraGarage;
 
 import com.acacias_del_mar.DTOs.CompraGarageDTO;
+import com.acacias_del_mar.DTOs.EntityMapper;
 import com.acacias_del_mar.entities.CompraGarage;
 import com.acacias_del_mar.entities.Garage;
 import com.acacias_del_mar.entities.Socio;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class CompraGarageServiceImpl implements CompraGarageService {
@@ -21,58 +23,59 @@ public class CompraGarageServiceImpl implements CompraGarageService {
     @Autowired
     private CompraGarageRepository repository;
     @Autowired
-    private SocioRepository socioRepository; // Necesario
+    private SocioRepository socioRepository; 
     @Autowired
-    private GarageRepository garageRepository; // Necesario
+    private GarageRepository garageRepository; 
+    @Autowired
+    private EntityMapper mapper;
 
     @Override
     @Transactional(readOnly = true)
-    public List<CompraGarage> obtenerTodas() {
-        return repository.findAll();
+    public List<CompraGarageDTO> obtenerTodas() {
+        return repository.findAll().stream()
+                .map(mapper::toResponseDTO) // ¡Magia!
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<CompraGarage> obtenerPorId(Integer id) {
-        return repository.findById(id);
+    public Optional<CompraGarageDTO> obtenerPorId(Integer id) {
+        return repository.findById(id)
+                .map(mapper::toResponseDTO); // ¡Magia!
     }
 
     @Override
     @Transactional
-    public CompraGarage crearCompraGarage(CompraGarageDTO dto) {
+    public CompraGarageDTO crearCompraGarage(CompraGarageDTO dto) {
+        // 1. Lógica de negocio
         Socio socio = socioRepository.findById(dto.getIdSocio())
-                .orElseThrow(() -> new RuntimeException("Socio no encontrado: " + dto.getIdSocio()));
-
+                .orElseThrow(() -> new RuntimeException("Socio no encontrado..."));
         Garage garage = garageRepository.findById(dto.getIdGarage())
-                .orElseThrow(() -> new RuntimeException("Garage no encontrado: " + dto.getIdGarage()));
-
-        // TODO: Validación de negocio (ej. el garage no esté ya comprado)
-
-        CompraGarage nuevaCompra = new CompraGarage();
-        nuevaCompra.setSocio(socio);
-        nuevaCompra.setGarage(garage);
-        nuevaCompra.setFechaCompra(dto.getFechaCompra());
-
-        return repository.save(nuevaCompra);
+                .orElseThrow(() -> new RuntimeException("Garage no encontrado..."));
+        
+        // 2. Mapeo
+        CompraGarage nuevaCompra = mapper.toEntity(dto, socio, garage); // ¡Magia!
+        
+        CompraGarage guardada = repository.save(nuevaCompra);
+        return mapper.toResponseDTO(guardada);
     }
 
     @Override
     @Transactional
-    public CompraGarage actualizarCompraGarage(Integer id, CompraGarageDTO dto) {
+    public CompraGarageDTO actualizarCompraGarage(Integer id, CompraGarageDTO dto) {
+        // 1. Lógica de negocio
         CompraGarage compraExistente = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Compra no encontrada: " + id));
-
+                .orElseThrow(() -> new RuntimeException("Compra no encontrada..."));
         Socio socio = socioRepository.findById(dto.getIdSocio())
-                .orElseThrow(() -> new RuntimeException("Socio no encontrado: " + dto.getIdSocio()));
-
+                .orElseThrow(() -> new RuntimeException("Socio no encontrado..."));
         Garage garage = garageRepository.findById(dto.getIdGarage())
-                .orElseThrow(() -> new RuntimeException("Garage no encontrado: " + dto.getIdGarage()));
-
-        compraExistente.setSocio(socio);
-        compraExistente.setGarage(garage);
-        compraExistente.setFechaCompra(dto.getFechaCompra());
-
-        return repository.save(compraExistente);
+                .orElseThrow(() -> new RuntimeException("Garage no encontrado..."));
+        
+        // 2. Mapeo
+        mapper.updateEntityFromDto(dto, socio, garage, compraExistente); // ¡Magia!
+        
+        CompraGarage actualizada = repository.save(compraExistente);
+        return mapper.toResponseDTO(actualizada);
     }
 
     @Override

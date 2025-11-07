@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface EmpleadoService {
-    List<Empleado> obtenerTodos();
-    Optional<Empleado> obtenerPorId(Integer id);
-    Empleado crearEmpleado(EmpleadoDTO empleadoDTO);
-    Empleado actualizarEmpleado(Integer id,EmpleadoDTO empleadoDTO);
+    List<EmpleadoDTO> obtenerTodos();
+    Optional<EmpleadoDTO> obtenerPorId(Integer id);
+    EmpleadoDTO crearEmpleado(EmpleadoDTO empleadoDTO);
+    EmpleadoDTO actualizarEmpleado(Integer id,EmpleadoDTO empleadoDTO);
     void eliminarEmpleado(Integer id);
 }

@@ -1,7 +1,6 @@
 package com.acacias_del_mar.controllers.BackEnd;
 
 import com.acacias_del_mar.DTOs.AsignacionEmpleadoZonaDTO;
-import com.acacias_del_mar.entities.AsignacionEmpleadoZona;
 import com.acacias_del_mar.services.AsignacionZonaEmpleado.AsignacionEmpleadoZonaService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,12 +20,12 @@ public class AsignacionEmpleadoZonaRestController {
     private AsignacionEmpleadoZonaService service;
 
     @GetMapping
-    public ResponseEntity<List<AsignacionEmpleadoZona>> obtenerTodas() {
+    public ResponseEntity<List<AsignacionEmpleadoZonaDTO>> obtenerTodas() {
         return ResponseEntity.ok(service.obtenerTodas());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AsignacionEmpleadoZona> obtenerPorId(@PathVariable Integer id) {
+    public ResponseEntity<AsignacionEmpleadoZonaDTO> obtenerPorId(@PathVariable Integer id) {
         return service.obtenerPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -35,7 +34,7 @@ public class AsignacionEmpleadoZonaRestController {
     @PostMapping
     public ResponseEntity<?> crearAsignacion(@Valid @RequestBody AsignacionEmpleadoZonaDTO dto) {
         try {
-            AsignacionEmpleadoZona asignacionCreada = service.crearAsignacion(dto);
+            AsignacionEmpleadoZonaDTO asignacionCreada = service.crearAsignacion(dto);
             return new ResponseEntity<>(asignacionCreada, HttpStatus.CREATED);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -45,7 +44,7 @@ public class AsignacionEmpleadoZonaRestController {
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizarAsignacion(@PathVariable Integer id, @Valid @RequestBody AsignacionEmpleadoZonaDTO dto) {
         try {
-            AsignacionEmpleadoZona asignacionActualizada = service.actualizarAsignacion(id, dto);
+            AsignacionEmpleadoZonaDTO asignacionActualizada = service.actualizarAsignacion(id, dto);
             return ResponseEntity.ok(asignacionActualizada);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);

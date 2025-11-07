@@ -22,12 +22,12 @@ public class AsignacionesRestController {
     private AsignacionService asignacionService;
 
     @GetMapping
-    public ResponseEntity<List<Asignacion>> obtenerTodas() {
+    public ResponseEntity<List<AsignacionDTO>> obtenerTodas() {
         return ResponseEntity.ok(asignacionService.obtenerTodas());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Asignacion> obtenerPorId(@PathVariable Integer id) {
+    public ResponseEntity<AsignacionDTO> obtenerPorId(@PathVariable Integer id) {
         return asignacionService.obtenerPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -36,7 +36,7 @@ public class AsignacionesRestController {
     @PostMapping
     public ResponseEntity<?> crearAsignacion(@Valid @RequestBody AsignacionDTO asignacionDTO) {
         try {
-            Asignacion asignacionCreada = asignacionService.crearAsignacion(asignacionDTO);
+            AsignacionDTO asignacionCreada = asignacionService.crearAsignacion(asignacionDTO);
             return new ResponseEntity<>(asignacionCreada, HttpStatus.CREATED);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -46,7 +46,7 @@ public class AsignacionesRestController {
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizarAsignacion(@PathVariable Integer id, @Valid @RequestBody AsignacionDTO asignacionDTO) {
         try {
-            Asignacion asignacionActualizada = asignacionService.actualizarAsignacion(id, asignacionDTO);
+            AsignacionDTO asignacionActualizada = asignacionService.actualizarAsignacion(id, asignacionDTO);
             return ResponseEntity.ok(asignacionActualizada);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);

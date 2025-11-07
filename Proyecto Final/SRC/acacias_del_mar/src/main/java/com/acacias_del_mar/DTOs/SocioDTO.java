@@ -8,6 +8,8 @@ import java.time.LocalDate;
 
 @Data
 public class SocioDTO {
+    
+    private Integer idSocio;
     @NotBlank(message = "El nombre es obligatorio")
     @Size(max = 25, message = "El nombre no puede exceder los 25 caracteres")
     private String nombre;

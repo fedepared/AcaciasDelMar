@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface AsignacionService {
-    List<Asignacion> obtenerTodas();
-    Optional<Asignacion> obtenerPorId(Integer id);
-    Asignacion crearAsignacion(AsignacionDTO asignacionDTO);
-    Asignacion actualizarAsignacion(Integer id, AsignacionDTO asignacionDTO);
+    List<AsignacionDTO> obtenerTodas();
+    Optional<AsignacionDTO> obtenerPorId(Integer id);
+    AsignacionDTO crearAsignacion(AsignacionDTO asignacionDTO);
+    AsignacionDTO actualizarAsignacion(Integer id, AsignacionDTO asignacionDTO);
     void eliminarAsignacion(Integer id);
 }

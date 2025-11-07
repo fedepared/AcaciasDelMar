@@ -7,10 +7,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SocioService {
-    List<Socio> obtenerTodosLosSocios();
-    Optional<Socio> obtenerSocioPorId(Integer id);
-    Socio crearSocio(SocioDTO socioDTO);
-    Socio actualizarSocio(Integer id,SocioDTO socioDTO);
+    List<SocioDTO> obtenerTodosLosSocios();
+    Optional<SocioDTO> obtenerSocioPorId(Integer id);
+    SocioDTO crearSocio(SocioDTO socioDTO);
+    SocioDTO actualizarSocio(Integer id,SocioDTO socioDTO);
     void eliminarSocio(Integer id);
     
 }

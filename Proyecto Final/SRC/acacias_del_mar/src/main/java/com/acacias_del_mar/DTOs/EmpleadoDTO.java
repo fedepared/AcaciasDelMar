@@ -5,7 +5,7 @@ import lombok.Data;
 @Data 
 public class EmpleadoDTO {
     
-    
+    private Integer idEmpleado;
     private Integer codigo;
 
     @Size(max = 45, message = "Nombre demasiado largo")

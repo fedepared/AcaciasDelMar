@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 public class AsignacionEmpleadoZonaDTO {
 
+    private Integer idAsignacionEmpleadoZona;
     @NotNull(message = "El ID de empleado es obligatorio")
     private Integer idEmpleado;
 

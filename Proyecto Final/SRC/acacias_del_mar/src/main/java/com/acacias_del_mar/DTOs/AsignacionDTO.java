@@ -6,6 +6,7 @@ import java.time.LocalDate;
 
 @Data
 public class AsignacionDTO {
+    private Integer idAsignacion;
     @NotNull(message = "El ID de vehículo es obligatorio")
     private Integer idVehiculo;
 

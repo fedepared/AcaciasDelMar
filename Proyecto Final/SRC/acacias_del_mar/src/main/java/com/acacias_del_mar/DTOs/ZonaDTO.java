@@ -6,6 +6,8 @@ import lombok.Data;
 
 @Data
 public class ZonaDTO {
+    
+    private Integer idZona; 
     @NotBlank(message = "la letra es obligatoria")
     private char letra;
     
@@ -16,4 +18,6 @@ public class ZonaDTO {
     private int profundidad;
     @NotNull(message = "el ancho es obligatorio")
     private int ancho;
+    
+    private TipoVehiculoDTO tipoVehiculo;
 }

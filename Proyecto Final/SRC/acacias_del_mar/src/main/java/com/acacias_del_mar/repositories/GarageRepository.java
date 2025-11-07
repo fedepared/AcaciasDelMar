@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface GarageRepository extends JpaRepository<Garage,Integer> {
-    boolean exstisByNumero(Integer numero);
+    boolean existsByNumero(Integer numero);
 }

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+
+<head>
+    <title th:fragment="title">Dashboard Empleado</title>
+</head>
+
+<body>
+<section class="section" th:fragment="content">
+
+    <h1 class="title is-2">Consulta de Asignaciones (Empleado-Zona)</h1>
+    <p class="subtitle is-5">Aquí puedes ver todas las asignaciones de empleados a las zonas del camping.</p>
+
+    <div id="notification" class="notification" style="display: none;">
+        <button class="delete"></button>
+        <span id="notificationMessage"></span>
+    </div>
+
+    <!-- Tabla de Asignaciones -->
+    <div class="table-container mt-4">
+        <table class="table is-fullwidth is-striped is-hoverable">
+            <thead>
+                <tr>
+                    <th>ID Asignación</th>
+                    <th>Empleado</th>
+                    <th>Zona</th>
+                </tr>
+            </thead>
+            <tbody id="asignacionesTableBody">
+                <tr>
+                    <td colspan="3" class="has-text-centered">
+                        <span class="icon is-large"><i class="fas fa-spinner fa-spin fa-2x"></i></span>
+                        <p>Cargando asignaciones...</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- JavaScript para cargar la API -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        
+        const API_URL = /*[[@{/api/asignaciones-empleado-zona}]]*/ '/api/asignaciones-empleado-zona';
+        const tableBody = document.getElementById('asignacionesTableBody');
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notificationMessage');
+
+        function showNotification(message, isError = false) {
+            notificationMessage.textContent = message;
+            notification.className = 'notification';
+            notification.classList.add(isError ? 'is-danger' : 'is-success', 'is-light');
+            notification.style.display = 'block';
+            setTimeout(() => notification.style.display = 'none', 3000);
+        }
+
+        async function cargarAsignaciones() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: No se pudo cargar la información.`);
+                }
+                const asignaciones = await response.json();
+
+                if (asignaciones.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="3" class="has-text-centered">No se encontraron asignaciones.</td></tr>';
+                    return;
+                }
+
+                tableBody.innerHTML = asignaciones.map(asig => `
+                    <tr>
+                        <td>${asig.idAsignacionEmpleadoZona}</td>
+                        <td>${asig.empleado.nombre} ${asig.empleado.apellido}</td>
+                        <td>Zona ${asig.zona.letra}</td>
+                    </tr>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error:', error);
+                tableBody.innerHTML = `<tr><td colspan="3" class="has-text-centered has-text-danger">${error.message}</td></tr>`;
+                showNotification(error.message, true);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', cargarAsignaciones);
+        
+        (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+            const $notification = $delete.parentNode;
+            $delete.addEventListener('click', () => {
+                $notification.style.display = 'none';
+            });
+        });
+        /*]]>*/
+    </script>
+</section>
+</body>
+</html>

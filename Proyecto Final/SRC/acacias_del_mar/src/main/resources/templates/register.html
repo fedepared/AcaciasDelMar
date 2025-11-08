@@ -1,36 +1,121 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Registro</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Acacias del Mar</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
-    <!<!-- para agregar el token CSRF para las peticiones futuras -->
-<!--    <meta name="_csrf" th:content="${_csrf.token}"/>
-    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        .hero-body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .register-box {
+            max-width: 450px;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-    <h2>Registro de Nuevo Usuario</h2>
+    <section class="hero is-primary is-fullheight">
+        <div class="hero-body">
+            <div class="container">
+                <div class="columns is-centered">
+                    <div class="column is-5-desktop is-7-tablet">
+                        
+                        <div class="box register-box p-5">
+                            <div class="has-text-centered mb-4">
+                                <i class="fas fa-water fa-3x"></i>
+                                <h2 class="title is-3 has-text-dark">Crear Cuenta</h2>
+                            </div>
+                            
+                            <!-- Mensaje de Error General (ej. usuario ya existe) -->
+                            <div th:if="${registroError}" class="notification is-danger is-light">
+                                <button class="delete"></button>
+                                <span th:text="${registroError}">Error de registro</span>
+                            </div>
 
-    <div th:if="${registroError}" style="color: red;" th:text="${registroError}"></div>
+                            <!-- Formulario de Registro -->
+                            <form th:action="@{/register}" th:object="${usuarioDTO}" method="post">
+                                
+                                <div class="field">
+                                    <label class="label">Nombre de Usuario</label>
+                                    <div class="control has-icons-left">
+                                        <input class="input" type="text" th:field="*{nombre}" placeholder="Ej: federico" required>
+                                        <span class="icon is-small is-left"><i class="fas fa-user"></i></span>
+                                    </div>
+                                    <!-- Error de validación para 'nombre' -->
+                                    <p th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="help is-danger"></p>
+                                </div>
 
-    <form th:action="@{/register}" th:object="${usuarioDTO}" method="post">
-        <div>
-            <label>Usuario:</label>
-            <input type="text" th:field="*{nombre}" />
-            <span style="color: red;" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></span>
+                                <div class="field">
+                                    <label class="label">Contraseña</label>
+                                    <div class="control has-icons-left">
+                                        <input class="input" type="password" th:field="*{password}" placeholder="Mínimo 8 caracteres" required>
+                                        <span class="icon is-small is-left"><i class="fas fa-lock"></i></span>
+                                    </div>
+                                    <!-- Error de validación para 'password' -->
+                                    <p th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="help is-danger"></p>
+                                </div>
+
+                                <!-- 
+                                  ¡CAMBIO IMPORTANTE!
+                                  Ocultamos el tipoUsuario. El AuthController le da un valor
+                                  por defecto ("SOCIO") al DTO, y este campo oculto lo enviará.
+                                -->
+                                <div class="field">
+                                    <label class="label">Tipo de Usuario</label>
+                                    <div class="control has-icons-left">
+                                        <div class="select is-fullwidth">
+                                            <select th:field="*{tipoUsuario}" required>
+                                                <!-- Dejamos SOCIO y EMPLEADO, pero OMITIMOS "ADMINISTRADOR" -->
+                                                <option value="" disabled>Selecciona un tipo</option>
+                                                <option value="SOCIO">Socio</option>
+                                                <option value="EMPLEADO">Empleado</option>
+                                                <!-- 
+                                                  Nota: Omitimos "ADMINISTRADOR" a propósito.
+                                                  Ese rol nunca debe asignarse desde un formulario público.
+                                                -->
+                                            </select>
+                                        </div>
+                                        <span class="icon is-small is-left"><i class="fas fa-users-cog"></i></span>
+                                    </div>
+                                    <!-- Error de validación para 'tipoUsuario' -->
+                                    <p th:if="${#fields.hasErrors('tipoUsuario')}" th:errors="*{tipoUsuario}" class="help is-danger"></p>
+                                </div>
+
+                                <div class="field mt-5">
+                                    <div class="control">
+                                        <button class="button is-primary is-fullwidth is-medium" type="submit">
+                                            Crear Cuenta
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                            
+                            <hr>
+                            <div class="has-text-centered">
+                                <a th:href="@{/login}">¿Ya tienes cuenta? Inicia sesión</a>
+                            </div>
+                        </div> <!-- fin .box -->
+                    </div>
+                </div>
+            </div>
         </div>
-        <div>
-            <label>Contraseña (min 8 caracteres):</label>
-            <input type="password" th:field="*{password}" />
-            <span style="color: red;" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
-        </div>
-        <div>
-            <label>Tipo (ej: ADMIN, EMPLEADO):</label> 
-            <input type="text" th:field="*{tipoUsuario}" />
-            <span style="color: red;" th:if="${#fields.hasErrors('tipoUsuario')}" th:errors="*{tipoUsuario}"></span>
-        </div>
-        <div>
-            <button type="submit">Registrar</button>
-        </div>
-    </form>
+    </section>
+    
+    <!-- Script para cerrar notificaciones -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+                const $notification = $delete.parentNode;
+                $delete.addEventListener('click', () => {
+                    $notification.parentNode.removeChild($notification);
+                });
+            });
+        });
+    </script>
 </body>
 </html>

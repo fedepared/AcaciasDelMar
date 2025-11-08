@@ -1,5 +1,7 @@
 package com.acacias_del_mar.services.TipoVehiculo;
 
+import com.acacias_del_mar.DTOs.EntityMapper;
+import com.acacias_del_mar.DTOs.TipoVehiculoDTO;
 import com.acacias_del_mar.services.TipoVehiculo.TipoVehiculoService;
 import com.acacias_del_mar.entities.TipoVehiculo;
 import com.acacias_del_mar.exception.GeneralException;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -18,12 +21,17 @@ import java.util.List;
 public class TipoVehiculoServiceImpl implements TipoVehiculoService{
 
     @Autowired
-    private TipoVehiculoRepository tvRepository;
+    private TipoVehiculoRepository tipoVehiculoRepository;
+
+    @Autowired
+    private EntityMapper mapper;
     
-    @Override
-    public List<TipoVehiculo> obtenerTiposDeVehiculo() {
-        log.info("Get Tipos Vehiculo");
-        return tvRepository.findAll();
+   @Override
+    @Transactional(readOnly = true)
+    public List<TipoVehiculoDTO> obtenerTodos() {
+        return tipoVehiculoRepository.findAll().stream()
+                .map(mapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
     
 }

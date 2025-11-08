@@ -14,17 +14,19 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/compra-garage")
-@PreAuthorize("hasRole('ADMINISTRADOR')")
+
 public class CompraGarageRestController {
     @Autowired
     private CompraGarageService service;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SOCIO')")
     public ResponseEntity<List<CompraGarageDTO>> obtenerTodas() {
         return ResponseEntity.ok(service.obtenerTodas());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SOCIO')")
     public ResponseEntity<CompraGarageDTO> obtenerPorId(@PathVariable Integer id) {
         return service.obtenerPorId(id)
                 .map(ResponseEntity::ok)
@@ -32,6 +34,7 @@ public class CompraGarageRestController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> crearCompraGarage(@Valid @RequestBody CompraGarageDTO dto) {
         try {
             CompraGarageDTO compraCreada = service.crearCompraGarage(dto);
@@ -42,6 +45,7 @@ public class CompraGarageRestController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> actualizarCompraGarage(@PathVariable Integer id, @Valid @RequestBody CompraGarageDTO dto) {
         try {
             CompraGarageDTO compraActualizada = service.actualizarCompraGarage(id, dto);
@@ -52,6 +56,7 @@ public class CompraGarageRestController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> eliminarCompraGarage(@PathVariable Integer id) {
         try {
             service.eliminarCompraGarage(id);

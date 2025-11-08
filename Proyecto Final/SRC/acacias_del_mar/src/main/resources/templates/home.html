@@ -1,0 +1,94 @@
+<!-- 1. Heredamos de la plantilla 'layout' -->
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+
+    <!-- 2. Definimos el Título de esta página -->
+    <head>
+        <title>Inicio - Acacias del Mar</title>
+    </head>
+
+    <body>
+        <!-- 3. Definimos el Contenido (th:fragment="content") -->
+        <section class="section" th:fragment="content">
+
+            <h1 class="title is-2">
+                ¡Bienvenido, <span sec:authentication="name">Usuario</span>!
+            </h1>
+
+            <p class="subtitle is-4">
+                Sistema de Gestión del Camping Acacias del Mar.
+            </p>
+
+            <div class="notification is-info is-light">
+                <p>Selecciona una opción del menú de la izquierda para comenzar a gestionar el sistema.</p>
+                <p>Tu rol actual es: <strong><span sec:authentication="principal.authorities">ROLES</span></strong></p>
+            </div>
+
+            <!-- Contenido del Dashboard (ej. tarjetas de Bulma) -->
+            <div class="columns is-multiline mt-4">
+
+                <!-- Tarjeta de Socios (solo para admin) -->
+                <div class="column is-one-third" sec:authorize="hasRole('ADMINISTRADOR')">
+                    <div class="card">
+                        <header class="card-header has-background-primary">
+                            <p class="card-header-title has-text-white is-size-4">
+                                <span class="icon mr-2"><i class="fas fa-users"></i></span>
+                                Socios
+                            </p>
+                        </header>
+                        <div class="card-content">
+                            <div class="content">
+                                Gestiona el alta, baja y modificación de los socios propietarios.
+                            </div>
+                        </div>
+                        <footer class="card-footer">
+                            <a th:href="@{/admin/socios}" class="card-footer-item">Ir a Socios</a>
+                        </footer>
+                    </div>
+                </div>
+
+                <!-- Tarjeta de Zonas (solo para admin) -->
+                <div class="column is-one-third" sec:authorize="hasRole('ADMINISTRADOR')">
+                    <div class="card">
+                        <header class="card-header has-background-info">
+                            <p class="card-header-title has-text-white is-size-4">
+                                <span class="icon mr-2"><i class="fas fa-map-marked-alt"></i></span>
+                                Zonas
+                            </p>
+                        </header>
+                        <div class="card-content">
+                            <div class="content">
+                                Define las zonas del camping y los tipos de vehículos permitidos.
+                            </div>
+                        </div>
+                        <footer class="card-footer">
+                            <a th:href="@{/admin/zonas}" class="card-footer-item">Ir a Zonas</a>
+                        </footer>
+                    </div>
+                </div>
+
+                <!-- Tarjeta de Vehículos (solo para admin) -->
+                <div class="column is-one-third" sec:authorize="hasRole('ADMINISTRADOR')">
+                    <div class="card">
+                        <header class="card-header has-background-success">
+                            <p class="card-header-title has-text-white is-size-4">
+                                <span class="icon mr-2"><i class="fas fa-caravan"></i></span>
+                                Vehículos
+                            </p>
+                        </header>
+                        <div class="card-content">
+                            <div class="content">
+                                Administra los vehículos registrados de los socios.
+                            </div>
+                        </div>
+                        <footer class="card-footer">
+                            <a th:href="@{/admin/vehiculos}" class="card-footer-item">Ir a Vehículos</a>
+                        </footer>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+    </body>
+</html>

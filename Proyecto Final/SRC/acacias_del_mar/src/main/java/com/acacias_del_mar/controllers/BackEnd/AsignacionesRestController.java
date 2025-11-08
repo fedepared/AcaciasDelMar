@@ -15,18 +15,20 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/asignaciones")
-@PreAuthorize("hasRole('ADMINISTRADOR')")
+
 public class AsignacionesRestController {
 
     @Autowired
     private AsignacionService asignacionService;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SOCIO')")
     public ResponseEntity<List<AsignacionDTO>> obtenerTodas() {
         return ResponseEntity.ok(asignacionService.obtenerTodas());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SOCIO')")
     public ResponseEntity<AsignacionDTO> obtenerPorId(@PathVariable Integer id) {
         return asignacionService.obtenerPorId(id)
                 .map(ResponseEntity::ok)
@@ -34,6 +36,7 @@ public class AsignacionesRestController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> crearAsignacion(@Valid @RequestBody AsignacionDTO asignacionDTO) {
         try {
             AsignacionDTO asignacionCreada = asignacionService.crearAsignacion(asignacionDTO);
@@ -44,6 +47,7 @@ public class AsignacionesRestController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> actualizarAsignacion(@PathVariable Integer id, @Valid @RequestBody AsignacionDTO asignacionDTO) {
         try {
             AsignacionDTO asignacionActualizada = asignacionService.actualizarAsignacion(id, asignacionDTO);
@@ -54,6 +58,7 @@ public class AsignacionesRestController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> eliminarAsignacion(@PathVariable Integer id) {
         try {
             asignacionService.eliminarAsignacion(id);

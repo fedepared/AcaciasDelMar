@@ -1,5 +1,6 @@
 package com.acacias_del_mar.controllers.BackEnd;
 
+import com.acacias_del_mar.DTOs.TipoVehiculoDTO;
 import com.acacias_del_mar.entities.TipoVehiculo;
 import com.acacias_del_mar.services.TipoVehiculo.TipoVehiculoService;
 import jakarta.validation.Valid;
@@ -12,27 +13,22 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 
 
 @RestController
-@RequestMapping("/api/tipoVehiculos")
-@CrossOrigin(origins = "*")
-@Slf4j
+@RequestMapping("/api/tipos-vehiculo")
+// Permitimos que ADMIN (para el CRUD) y SOCIO (para ver) accedan
+@PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SOCIO')")
 public class TipoVehiculoRestController {
-    
+
     @Autowired
-    private TipoVehiculoService tvService;
-    
-    //Get
+    private TipoVehiculoService tipoVehiculoService;
+
     @GetMapping
-    public ResponseEntity<List<TipoVehiculo>> obtenerTodos()
-    {
-        log.info("GET /api/tipoVehiculos - obtener todos los tipos de vehiculos");
-        List<TipoVehiculo> tvs = tvService.obtenerTiposDeVehiculo();
-        return ResponseEntity.ok(tvs);
+    public ResponseEntity<List<TipoVehiculoDTO>> obtenerTodos() {
+        return ResponseEntity.ok(tipoVehiculoService.obtenerTodos());
     }
-    
-    
 }
 

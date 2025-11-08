@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+
+<head>
+    <title th:fragment="title">Consultas Socio</title>
+</head>
+
+<body>
+<section class="section" th:fragment="content">
+
+    <h1 class="title is-2">Portal de Consultas</h1>
+    <p class="subtitle is-5">Aquí puedes ver la información del camping.</p>
+    
+    <div id="notification" class="notification" style="display: none;">
+        <button class="delete"></button>
+        <span id="notificationMessage"></span>
+    </div>
+
+    <!-- TABS DE NAVEGACIÓN -->
+    <div class="tabs is-boxed">
+        <ul>
+            <li class="is-active" data-tab="vehiculosTab"><a>Vehículos</a></li>
+            <li data-tab="asignacionesTab"><a>Asignaciones (Vehículo-Garage)</a></li>
+            <li data-tab="comprasTab"><a>Compras de Garages</a></li>
+        </ul>
+    </div>
+
+    <!-- CONTENIDO DE TABS -->
+
+    <!-- 1. Tab Vehículos -->
+    <div id="vehiculosTab" class="content-tab">
+        <h3 class="title is-4">Vehículos Registrados</h3>
+        <div class="table-container">
+            <table class="table is-fullwidth is-striped is-hoverable">
+                <thead>
+                    <tr>
+                        <th>Matrícula</th>
+                        <th>Marca</th>
+                        <th>Tipo</th>
+                        <th>Socio Dueño</th>
+                    </tr>
+                </thead>
+                <tbody id="vehiculosTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 2. Tab Asignaciones V-G -->
+    <div id="asignacionesTab" class="content-tab" style="display: none;">
+        <h3 class="title is-4">Asignaciones (Vehículo a Garage)</h3>
+        <div class="table-container">
+            <table class="table is-fullwidth is-striped is-hoverable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha Asignación</th>
+                        <th>Vehículo (Matrícula)</th>
+                        <th>Garage (Número)</th>
+                    </tr>
+                </thead>
+                <tbody id="asignacionesTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- 3. Tab Compras Garages -->
+    <div id="comprasTab" class="content-tab" style="display: none;">
+        <h3 class="title is-4">Compras de Garages</h3>
+        <div class="table-container">
+            <table class="table is-fullwidth is-striped is-hoverable">
+                <thead>
+                    <tr>
+                        <th>ID Compra</th>
+                        <th>Fecha Compra</th>
+                        <th>Socio Comprador</th>
+                        <th>Garage (Número)</th>
+                    </tr>
+                </thead>
+                <tbody id="comprasTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- JavaScript para TABS y APIs -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        
+        // URLs de las APIs (construidas por Thymeleaf)
+        const API_VEHICULOS = /*[[@{/api/vehiculos}]]*/ '/api/vehiculos';
+        const API_ASIGNACIONES = /*[[@{/api/asignaciones}]]*/ '/api/asignaciones';
+        const API_COMPRAS = /*[[@{/api/compras-garage}]]*/ '/api/compras-garage';
+        
+        // --- Lógica de Notificación ---
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notificationMessage');
+        function showNotification(message, isError = false) {
+            notificationMessage.textContent = message;
+            notification.className = 'notification';
+            notification.classList.add(isError ? 'is-danger' : 'is-success', 'is-light');
+            notification.style.display = 'block';
+            setTimeout(() => notification.style.display = 'none', 3000);
+        }
+        (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+            const $notification = $delete.parentNode;
+            $delete.addEventListener('click', () => $notification.style.display = 'none');
+        });
+        
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const [year, month, day] = dateString.split('-');
+            return `${day}/${month}/${year}`;
+        }
+
+        // --- Lógica de TABS (Pestañas) ---
+        const tabs = document.querySelectorAll('.tabs li');
+        const tabContents = document.querySelectorAll('.content-tab');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Desactiva todos
+                tabs.forEach(t => t.classList.remove('is-active'));
+                tabContents.forEach(c => c.style.display = 'none');
+                
+                // Activa el clickeado
+                tab.classList.add('is-active');
+                document.getElementById(tab.dataset.tab).style.display = 'block';
+            });
+        });
+
+        // --- Lógica de Carga de APIs ---
+        
+        // Carga genérica
+        async function loadApiData(url, tableBody, rowMapper) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`Error ${response.status} al cargar ${url}`);
+                const data = await response.json();
+                
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="100%" class="has-text-centered">No se encontraron datos.</td></tr>';
+                    return;
+                }
+                tableBody.innerHTML = data.map(rowMapper).join('');
+            } catch (error) {
+                console.error('Error:', error);
+                tableBody.innerHTML = `<tr><td colspan="100%" class="has-text-centered has-text-danger">${error.message}</td></tr>`;
+                showNotification(error.message, true);
+            }
+        }
+
+        // Mapeadores de datos (cómo convertir JSON a <tr>)
+        const vehiculoMapper = v => `
+            <tr>
+                <td>${v.matricula}</td>
+                <td>${v.marca || 'N/A'}</td>
+                <td>${v.tipoVehiculo.denominacion}</td>
+                <td>${v.socioDueño.nombre} ${v.socioDueño.apellido}</td>
+            </tr>`;
+            
+        const asignacionMapper = a => `
+            <tr>
+                <td>${a.idAsignacion}</td>
+                <td>${formatDate(a.fechaAsignacion)}</td>
+                <td>${a.vehiculo.matricula}</td>
+                <td>Nº ${a.garage.numero} (Zona ${a.garage.zona.letra})</td>
+            </tr>`;
+
+        const compraMapper = c => `
+            <tr>
+                <td>${c.idComprasGarages}</td>
+                <td>${formatDate(c.fechaCompra)}</td>
+                <td>${c.socio.nombre} ${c.socio.apellido}</td>
+                <td>Nº ${c.garage.numero} (Zona ${c.garage.zona.letra})</td>
+            </tr>`;
+
+        // Carga inicial
+        document.addEventListener('DOMContentLoaded', () => {
+            loadApiData(API_VEHICULOS, document.getElementById('vehiculosTableBody'), vehiculoMapper);
+            loadApiData(API_ASIGNACIONES, document.getElementById('asignacionesTableBody'), asignacionMapper);
+            loadApiData(API_COMPRAS, document.getElementById('comprasTableBody'), compraMapper);
+        });
+        
+        /*]]>*/
+    </script>
+</section>
+</body>
+</html>

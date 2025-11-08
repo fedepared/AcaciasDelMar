@@ -13,6 +13,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
+import static org.springframework.web.servlet.function.RequestPredicates.headers;
 
 
 @Configuration
@@ -50,6 +52,15 @@ public class SecurityConfig {
     //Filtros de seguridad para las urls publicas y privadas
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
+        
+         // Política de Seguridad de Contenidos (CSP)
+        String cspPolicy = 
+            "default-src 'self';" + 
+            "style-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com 'unsafe-inline';" + 
+            "font-src 'self' https://cdnjs.cloudflare.com;" + 
+            "script-src 'self' 'unsafe-inline';" + 
+            "img-src 'self' data:;"; 
+        
         http.authorizeHttpRequests(auth -> 
             auth
                 //Permitidas
@@ -73,7 +84,11 @@ public class SecurityConfig {
                 .permitAll()  
         )
         .csrf(csrf -> csrf.disable()) //deshabilitarlo para produ
-        ;
+        
+        .headers(headers -> headers
+                // Añadimos la cabecera CSP
+                .addHeaderWriter(new StaticHeadersWriter("Content-Security-Policy", cspPolicy))
+        ); 
         
         return http.build();
     }

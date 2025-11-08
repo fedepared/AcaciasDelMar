@@ -13,18 +13,19 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/asignaciones-empleado-zona")
-@PreAuthorize("hasRole('ADMINISTRADOR')")
 public class AsignacionEmpleadoZonaRestController {
 
     @Autowired
     private AsignacionEmpleadoZonaService service;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO')")
     public ResponseEntity<List<AsignacionEmpleadoZonaDTO>> obtenerTodas() {
         return ResponseEntity.ok(service.obtenerTodas());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO')")
     public ResponseEntity<AsignacionEmpleadoZonaDTO> obtenerPorId(@PathVariable Integer id) {
         return service.obtenerPorId(id)
                 .map(ResponseEntity::ok)
@@ -32,6 +33,7 @@ public class AsignacionEmpleadoZonaRestController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> crearAsignacion(@Valid @RequestBody AsignacionEmpleadoZonaDTO dto) {
         try {
             AsignacionEmpleadoZonaDTO asignacionCreada = service.crearAsignacion(dto);
@@ -42,6 +44,7 @@ public class AsignacionEmpleadoZonaRestController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> actualizarAsignacion(@PathVariable Integer id, @Valid @RequestBody AsignacionEmpleadoZonaDTO dto) {
         try {
             AsignacionEmpleadoZonaDTO asignacionActualizada = service.actualizarAsignacion(id, dto);
@@ -52,6 +55,7 @@ public class AsignacionEmpleadoZonaRestController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> eliminarAsignacion(@PathVariable Integer id) {
         try {
             service.eliminarAsignacion(id);

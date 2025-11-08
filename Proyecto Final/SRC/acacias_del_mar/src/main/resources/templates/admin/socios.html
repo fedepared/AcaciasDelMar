@@ -1,0 +1,389 @@
+<!-- 1. Heredamos de la plantilla 'layout' -->
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+
+    <head>
+        <!-- Este fragmento reemplaza al <title> en layout.html -->
+        <title th:fragment="title">Gestión de Socios</title>
+    </head>
+    
+    <body>
+        <!-- Este fragmento reemplaza al <div th:replace="${content}"> en layout.html -->
+        <section class="section" th:fragment="content">
+
+            <div class="is-flex is-justify-content-space-between is-align-items-center">
+                <h1 class="title is-2">Gestión de Socios</h1>
+                <button class="button is-primary" id="btnNuevoSocio">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Crear Socio</span>
+                </button>
+            </div>
+
+            <p class="subtitle is-5">Administra los socios del camping.</p>
+
+
+            <div id="notification" class="notification" style="display: none;">
+                <button class="delete"></button>
+                <span id="notificationMessage"></span>
+            </div>
+
+            <!-- Tabla de Socios -->
+            <div class="table-container mt-4">
+                <table class="table is-fullwidth is-striped is-hoverable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Teléfono</th>
+                            <th>Fecha de Ingreso</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sociosTableBody">
+                        <!-- Carga inicial -->
+                        <tr>
+                            <td colspan="6" class="has-text-centered">
+                                <span class="icon is-large"><i class="fas fa-spinner fa-spin fa-2x"></i></span>
+                                <p>Cargando socios...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+
+            <!-- Modal CREAR/EDITAR -->
+            <div class="modal" id="socioModal">
+                <div class="modal-background"></div>
+                <div class="modal-card">
+                    <header class="modal-card-head">
+                        <p class="modal-card-title" id="modalTitle">Crear Socio</p>
+                        <button class="delete" aria-label="close"></button>
+                    </header>
+                    <section class="modal-card-body">
+                        <form id="socioForm">
+                            <input type="hidden" id="socioId">
+                            <div class="field">
+                                <label class="label" for="nombre">Nombre</label>
+                                <div class="control">
+                                    <input class="input" type="text" id="nombre" required>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label class="label" for="apellido">Apellido</label>
+                                <div class="control">
+                                    <input class="input" type="text" id="apellido" required>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label class="label" for="direccion">Dirección</label>
+                                <div class="control">
+                                    <input class="input" type="text" id="direccion">
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label class="label" for="telefono">Teléfono</label>
+                                <div class="control">
+                                    <input class="input" type="tel" id="telefono">
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label class="label" for="fechaDeIngreso">Fecha de Ingreso</label>
+                                <div class="control">
+                                    <input class="input" type="date" id="fechaDeIngreso" required>
+                                </div>
+                            </div>
+                        </form>
+                        <div id="modalErrorMessage" class="notification is-danger is-light mt-3" style="display: none;"></div>
+                    </section>
+                    <footer class="modal-card-foot is-justify-content-flex-end">
+                        <button class="button is-success" id="btnGuardar">Guardar Cambios</button>
+                        <button class="button" id="btnCancelar">Cancelar</button>
+                    </footer>
+                </div>
+            </div>
+
+
+            <!-- Modal CONFIRMACIÓN (ELIMINAR) -->
+            <div class="modal" id="deleteModal">
+                <div class="modal-background"></div>
+                <div class="modal-card">
+                    <header class="modal-card-head has-background-danger">
+                        <p class="modal-card-title has-text-white">Confirmar Eliminación</p>
+                        <button class="delete" aria-label="close"></button>
+                    </header>
+                    <section class="modal-card-body">
+                        <p>¿Estás seguro de que deseas eliminar a <strong id="deleteSocioNameText">este socio</strong>?</p>
+                        <p><strong>Esta acción no se puede deshacer.</strong></p>
+                        <input type="hidden" id="socioIdParaEliminar">
+                    </section>
+                    <footer class="modal-card-foot is-justify-content-flex-end">
+                        <button class="button is-danger" id="btnConfirmarEliminar">Eliminar</button>
+                        <button class="button" id="btnCancelarEliminar">Cancelar</button>
+                    </footer>
+                </div>
+            </div>
+
+
+            <!-- =======================
+                 JAVASCRIPT PURO (Vanilla JS)
+            ======================== -->
+            
+            <!-- 
+              PASO 1: Añadimos 'th:inline="javascript"'
+              Esto le dice a Thymeleaf que procese el código dentro de esta etiqueta
+            -->
+            <script th:inline="javascript">
+                /*<![CDATA[*/
+                
+                // =======================
+                // PASO 2: CORREGIMOS LA URL DE LA API
+                // Thymeleaf '[[@{...}]]' reemplazará esto con la URL correcta,
+                // incluyendo el context-path (ej. /acaciasDelMar/api/socios)
+                // =======================
+                const API_URL = /*[[@{/api/socios}]]*/ '/api/socios';
+
+                // Elementos del DOM
+                const tableBody = document.getElementById('sociosTableBody');
+                // (Modal de Crear/Editar)
+                const socioModal = document.getElementById('socioModal');
+                const modalTitle = document.getElementById('modalTitle');
+                const socioForm = document.getElementById('socioForm');
+                const socioIdInput = document.getElementById('socioId');
+                const modalErrorMessage = document.getElementById('modalErrorMessage');
+                const btnGuardar = document.getElementById('btnGuardar');
+                // (Modal de Eliminar)
+                const deleteModal = document.getElementById('deleteModal');
+                const socioIdParaEliminarInput = document.getElementById('socioIdParaEliminar');
+                const deleteSocioNameText = document.getElementById('deleteSocioNameText');
+                const btnConfirmarEliminar = document.getElementById('btnConfirmarEliminar');
+                // (Notificación)
+                const notification = document.getElementById('notification');
+                const notificationMessage = document.getElementById('notificationMessage');
+
+
+                function showNotification(message, isError = false) {
+                    notificationMessage.textContent = message;
+                    notification.className = 'notification'; // Resetea clases
+                    if (isError) {
+                        notification.classList.add('is-danger', 'is-light');
+                    } else {
+                        notification.classList.add('is-success', 'is-light');
+                    }
+                    notification.style.display = 'block';
+                    setTimeout(() => {
+                        notification.style.display = 'none';
+                    }, 3000);
+                }
+                
+                function formatDate(dateString) {
+                    if (!dateString) return 'N/A';
+                    const [year, month, day] = dateString.split('-');
+                    return `${day}/${month}/${year}`;
+                }
+
+                /**
+                 * Carga todos los socios desde la API y los muestra en la tabla.
+                 */
+                async function cargarSocios() {
+                    try {
+                        const response = await fetch(API_URL);
+                        if (!response.ok) {
+                            let errorMsg = `Error al cargar los socios (código: ${response.status})`;
+                            if (response.status === 403) {
+                                 errorMsg = 'Error 403: No tienes permiso para ver este recurso.';
+                            } else if (response.status === 404) {
+                                errorMsg = `Error 404: No se encontró la API en la URL: ${API_URL}`;
+                            }
+                            throw new Error(errorMsg);
+                        }
+                        const socios = await response.json();
+
+                        if (socios.length === 0) {
+                            tableBody.innerHTML = '<tr><td colspan="6" class="has-text-centered">No se encontraron socios.</td></tr>';
+                            return;
+                        }
+
+                        // Mapea los socios a filas de la tabla
+                        tableBody.innerHTML = socios.map(socio => `
+                            <tr>
+                                <td>${socio.idSocio}</td>
+                                <td>${socio.nombre}</td>
+                                <td>${socio.apellido}</td>
+                                <td>${socio.telefono || 'N/A'}</td>
+                                <td>${formatDate(socio.fechaDeIngreso)}</td>
+                                <td>
+                                    <!-- 
+                                      ================ ¡RESTAURADO! ================
+                                      Volvemos a usar 'onclick'
+                                      La CSP 'script-src: unsafe-inline' lo permite.
+                                    -->
+                                    <button class="button is-small is-info" onclick="abrirModalEditar(${socio.idSocio})">
+                                        <span class="icon"><i class="fas fa-edit"></i></span>
+                                    </button>
+                                    <button class="button is-small is-danger" onclick="abrirModalEliminar(${socio.idSocio}, '${socio.nombre} ${socio.apellido}')">
+                                        <span class="icon"><i class="fas fa-trash"></i></span>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('');
+
+                    } catch (error) {
+                        console.error('Error en cargarSocios:', error);
+                        tableBody.innerHTML = `<tr><td colspan="6" class="has-text-centered has-text-danger">${error.message}</td></tr>`;
+                        showNotification(error.message, true);
+                    }
+                }
+
+                /**
+                 * Abre el modal para crear un nuevo socio.
+                 */
+                function abrirModalCrear() {
+                    socioForm.reset();
+                    socioIdInput.value = ''; // Asegura que el ID esté vacío
+                    modalTitle.textContent = 'Crear Nuevo Socio';
+                    modalErrorMessage.style.display = 'none';
+                    socioModal.classList.add('is-active');
+                }
+
+                /**
+                 * Abre el modal para editar un socio existente.
+                 * @param {number} id - El ID del socio a editar.
+                 */
+                async function abrirModalEditar(id) {
+                    try {
+                        const response = await fetch(`${API_URL}/${id}`);
+                        if (!response.ok)
+                            throw new Error('No se pudo cargar el socio para editar.');
+                        const socio = await response.json();
+                        // Llena el formulario
+                        socioIdInput.value = socio.idSocio;
+                        document.getElementById('nombre').value = socio.nombre;
+                        document.getElementById('apellido').value = socio.apellido;
+                        document.getElementById('direccion').value = socio.direccion || '';
+                        document.getElementById('telefono').value = socio.telefono || '';
+                        document.getElementById('fechaDeIngreso').value = socio.fechaDeIngreso;
+                        modalTitle.textContent = 'Editar Socio';
+                        modalErrorMessage.style.display = 'none';
+                        socioModal.classList.add('is-active');
+                    } catch (error) {
+                        console.error('Error en abrirModalEditar:', error);
+                        showNotification(error.message, true);
+                    }
+                }
+
+                function cerrarModal() {
+                    socioModal.classList.remove('is-active');
+                }
+
+                /**
+                 * Maneja el guardado (Crear o Actualizar) del formulario.
+                 */
+                async function guardarSocio(event) {
+                    event.preventDefault(); 
+                    const id = socioIdInput.value;
+                    const esNuevo = id === '';
+                    const method = esNuevo ? 'POST' : 'PUT';
+                    const url = esNuevo ? API_URL : `${API_URL}/${id}`;
+                    
+                    btnGuardar.classList.add('is-loading');
+                    modalErrorMessage.style.display = 'none';
+
+                    const socioDTO = {
+                        nombre: document.getElementById('nombre').value,
+                        apellido: document.getElementById('apellido').value,
+                        direccion: document.getElementById('direccion').value,
+                        telefono: document.getElementById('telefono').value,
+                        fechaDeIngreso: document.getElementById('fechaDeIngreso').value
+                    };
+
+                    try {
+                        const response = await fetch(url, {
+                            method: method,
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(socioDTO)
+                        });
+
+                        if (!response.ok) {
+                            const errorMsg = await response.text();
+                            throw new Error(errorMsg || 'Error al guardar el socio.');
+                        }
+                        
+                        cerrarModal();
+                        await cargarSocios(); // Recarga la tabla
+                        showNotification(`Socio ${esNuevo ? 'creado' : 'actualizado'} exitosamente.`, false);
+                    } catch (error) {
+                        console.error('Error en guardarSocio:', error);
+                        modalErrorMessage.textContent = error.message;
+                        modalErrorMessage.style.display = 'block';
+                    } finally {
+                        btnGuardar.classList.remove('is-loading');
+                    }
+                }
+
+                /**
+                 * Abre el modal de confirmación para eliminar.
+                 */
+                function abrirModalEliminar(id, nombreCompleto) {
+                    socioIdParaEliminarInput.value = id;
+                    deleteSocioNameText.textContent = nombreCompleto;
+                    deleteModal.classList.add('is-active');
+                }
+
+                function cerrarModalEliminar() {
+                    deleteModal.classList.remove('is-active');
+                }
+
+                /**
+                 * Confirma y ejecuta la eliminación del socio.
+                 */
+                async function confirmarEliminacion() {
+                    const id = socioIdParaEliminarInput.value;
+                    btnConfirmarEliminar.classList.add('is-loading');
+                    try {
+                        const response = await fetch(`${API_URL}/${id}`, {
+                            method: 'DELETE'
+                        });
+                        if (!response.ok) {
+                            const errorMsg = await response.text();
+                            throw new Error(errorMsg || 'Error al eliminar el socio.');
+                        }
+                        cerrarModalEliminar();
+                        await cargarSocios(); // Recarga la tabla
+                        showNotification('Socio eliminado exitosamente.', false);
+                    } catch (error) {
+                        console.error('Error en confirmarEliminacion:', error);
+                        showNotification(error.message, true);
+                    } finally {
+                        btnConfirmarEliminar.classList.remove('is-loading');
+                    }
+                }
+
+                // --- Event Listeners Globales ---
+                document.addEventListener('DOMContentLoaded', cargarSocios);
+                document.getElementById('btnNuevoSocio').addEventListener('click', abrirModalCrear);
+                btnGuardar.addEventListener('click', guardarSocio);
+                btnConfirmarEliminar.addEventListener('click', confirmarEliminacion);
+
+                // Clicks para cerrar modals (Botones 'X', Cancelar, y fondo)
+                (document.querySelectorAll('.modal-background, .modal .delete, #btnCancelar, #btnCancelarEliminar') || []).forEach(($close) => {
+                    const $target = $close.closest('.modal');
+                    $close.addEventListener('click', () => {
+                        $target.classList.remove('is-active');
+                    });
+                });
+
+                // Click en 'X' de notificación
+                (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+                    const $notification = $delete.parentNode;
+                    $delete.addEventListener('click', () => {
+                        $notification.style.display = 'none';
+                    });
+                });
+
+                /*]]>*/
+            </script>
+        </section>
+    </body>
+</html>

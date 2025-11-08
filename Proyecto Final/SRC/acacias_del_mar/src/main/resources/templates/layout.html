@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<!-- 
+  ===================================================================
+  ¡CORRECCIÓN CLAVE!
+  El fragmento "layout" ahora envuelve TODA la página, 
+  incluyendo el <head>, para que los estilos CSS se hereden.
+  ===================================================================
+-->
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="layout(title, content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- 
+      El título se reemplaza por el fragmento 'title' 
+      que pasamos desde admin/socios.html
+    -->
+    <title th:replace="${title}">Acacias del Mar</title>
+    
+    <!-- 1. Bulma CSS (Ahora sí se cargará) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+    
+    <!-- 2. Font Awesome (Ahora sí se cargará) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <!-- 3. CSS Personalizado (opcional) -->
+    <style>
+        /* Ajustes menores para la plantilla */
+        .full-height {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .main-content {
+            flex: 1;
+        }
+    </style>
+</head>
+<body class="full-height">
+
+    <!-- Cabecera (Navbar de Bulma) -->
+    <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+            <a class="navbar-item" th:href="@{/home}">
+                <i class="fas fa-water fa-2x mr-2"></i>
+                <span class="is-size-4">Acacias del Mar</span>
+            </a>
+        </div>
+        <div class="navbar-menu">
+            <div class="navbar-end">
+                <div class="navbar-item">
+                    <div class="buttons">
+                        <!-- Formulario de Logout (oculto en un botón) -->
+                        <form th:action="@{/logout}" method="post" id="logoutForm">
+                            <button class="button is-light" type="submit">
+                                <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
+                                <span>Cerrar Sesión</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal (Layout de 2 Columnas) -->
+    <div class="columns main-content m-0">
+    
+        <!-- Columna 1: Menú Lateral (Sidebar) -->
+        <div class="column is-one-fifth has-background-light p-4">
+            <aside class="menu">
+                <p class="menu-label">
+                    General
+                </p>
+                <ul class="menu-list">
+                    <li><a th:href="@{/home}" th:classappend="${currentPage == '/home' ? 'is-active' : ''}"><span class="icon"><i class="fas fa-home"></i></span> Inicio</a></li>
+                </ul>
+
+                <!-- ==================================
+                     SECCIÓN SÓLO PARA ADMINISTRADORES
+                =================================== -->
+                <th:block sec:authorize="hasRole('ADMINISTRADOR')">
+                    <p class="menu-label">
+                        Administración
+                    </p>
+                    <ul class="menu-list">
+                        <li>
+                            <a th:classappend="${currentPage.startsWith('/admin/socios') ? 'is-active' : ''}"
+                               th:href="@{/admin/socios}">
+                               <span class="icon"><i class="fas fa-users"></i></span> Socios
+                            </a>
+                        </li>
+                        <li>
+                            <a th:classappend="${currentPage.startsWith('/admin/empleados') ? 'is-active' : ''}"
+                               th:href="@{/admin/empleados}">
+                               <span class="icon"><i class="fas fa-user-shield"></i></span> Empleados
+                            </a>
+                        </li>
+                        <li>
+                            <a th:classappend="${currentPage.startsWith('/admin/zonas') ? 'is-active' : ''}"
+                               th:href="@{/admin/zonas}">
+                               <span class="icon"><i class="fas fa-map-marked-alt"></i></span> Zonas
+                            </a>
+                        </li>
+                        <li>
+                            <a th:classappend="${currentPage.startsWith('/admin/garages') ? 'is-active' : ''}"
+                               th:href="@{/admin/garages}">
+                               <span class="icon"><i class="fas fa-warehouse"></i></span> Garages
+                            </a>
+                        </li>
+                        <li>
+                            <a th:classappend="${currentPage.startsWith('/admin/vehiculos') ? 'is-active' : ''}"
+                               th:href="@{/admin/vehiculos}">
+                               <span class="icon"><i class="fas fa-caravan"></i></span> Vehículos
+                            </a>
+                        </li>
+                    </ul>
+                    <p class="menu-label">
+                        Asignaciones
+                    </p>
+                    <ul class="menu-list">
+                         <li>
+                            <a th:classappend="${currentPage.startsWith('/admin/asignaciones') ? 'is-active' : ''}"
+                               th:href="@{/admin/asignaciones}">
+                               <span class="icon"><i class="fas fa-calendar-check"></i></span> Asignaciones V-G
+                            </a>
+                        </li>
+                         <li>
+                            <a th:classappend="${currentPage.startsWith('/admin/asignaciones-ez') ? 'is-active' : ''}"
+                               th:href="@{/admin/asignaciones-ez}">
+                               <span class="icon"><i class="fas fa-user-tag"></i></span> Asignaciones E-Z
+                            </a>
+                        </li>
+                        <li>
+                            <a th:classappend="${currentPage.startsWith('/admin/compras') ? 'is-active' : ''}"
+                               th:href="@{/admin/compras}">
+                               <span class="icon"><i class="fas fa-file-invoice-dollar"></i></span> Compras
+                            </a>
+                        </li>
+                    </ul>
+                </th:block>
+                
+                <!-- (Otras secciones de roles) -->
+                <th:block sec:authorize="hasRole('EMPLEADO')">
+                     <p class="menu-label">
+                        Empleado
+                    </p>
+                    <ul class="menu-list">
+                        <li><a th:href="@{/empleado/tareas}">Mis Tareas</a></li>
+                    </ul>
+                </th:block>
+
+            </aside>
+        </div>
+        
+        <!-- Columna 2: Contenido Dinámico de la Página -->
+        <div class="column is-four-fifths p-5">
+            <main>
+                <!-- 
+                  ====================================================
+                  ¡CORRECCIÓN CLAVE!
+                  Thymeleaf reemplazará este <div> con el fragmento 
+                  "content" que le pasamos (el <section> de socios.html)
+                  ====================================================
+                -->
+                <div th:replace="${content}">
+                    Contenido de la página aquí...
+                </div>
+            </main>
+        </div>
+        
+    </div> <!-- fin .columns -->
+
+    <!-- Pie de Página -->
+    <footer class="footer mt-auto p-4 has-background-dark has-text-light">
+        <div class="content has-text-centered">
+            <p>
+                <strong>Proyecto Acacias del Mar</strong> por <span sec:authentication="name">Usuario</span>.
+                Proyecto final de Programación II.
+            </p>
+        </div>
+    </footer>
+
+</body>
+</html>

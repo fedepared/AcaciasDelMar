@@ -1,0 +1,425 @@
+<!-- 1. Heredamos de la plantilla 'layout' -->
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+
+<head>
+    <title th:fragment="title">Gestión de Vehículos</title>
+</head>
+
+<body>
+<section class="section" th:fragment="content">
+
+    <div class="is-flex is-justify-content-space-between is-align-items-center">
+        <h1 class="title is-2">Gestión de Vehículos</h1>
+        <button class="button is-primary" id="btnNuevoVehiculo">
+            <span class="icon"><i class="fas fa-plus"></i></span>
+            <span>Registrar Vehículo</span>
+        </button>
+    </div>
+    <p class="subtitle is-5">Administra los vehículos de los socios.</p>
+
+    <!-- Notificación General -->
+    <div id="notification" class="notification" style="display: none;">
+        <button class="delete"></button>
+        <span id="notificationMessage"></span>
+    </div>
+
+    <!-- Tabla de Vehículos -->
+    <div class="table-container mt-4">
+        <table class="table is-fullwidth is-striped is-hoverable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Matrícula</th>
+                    <th>Marca</th>
+                    <th>Tipo</th>
+                    <th>Socio Dueño</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="vehiculosTableBody">
+                <tr>
+                    <td colspan="6" class="has-text-centered">
+                        <span class="icon is-large"><i class="fas fa-spinner fa-spin fa-2x"></i></span>
+                        <p>Cargando vehículos...</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- =======================
+         Modal CREAR/EDITAR
+    ======================== -->
+    <div class="modal" id="vehiculoModal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title" id="modalTitle">Registrar Vehículo</p>
+                <button class="delete" aria-label="close"></button>
+            </header>
+            <section class="modal-card-body">
+                <form id="vehiculoForm">
+                    <input type="hidden" id="vehiculoId">
+
+                    <div class="field">
+                        <label class="label" for="matricula">Matrícula</label>
+                        <div class="control">
+                            <input class="input" type="text" id="matricula" required>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label" for="marca">Marca</label>
+                        <div class="control">
+                            <input class="input" type="text" id="marca">
+                        </div>
+                    </div>
+
+                    <div class="columns">
+                        <div class="column">
+                            <div class="field">
+                                <label class="label" for="profundidad">Profundidad (cm)</label>
+                                <div class="control">
+                                    <input class="input" type="number" id="profundidad" placeholder="Ej: 500">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column">
+                            <div class="field">
+                                <label class="label" for="alto">Alto (cm)</label>
+                                <div class="control">
+                                    <input class="input" type="number" id="alto" placeholder="Ej: 250">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column">
+                            <div class="field">
+                                <label class="label" for="ancho">Ancho (cm)</label>
+                                <div class="control">
+                                    <input class="input" type="number" id="ancho" placeholder="Ej: 220">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dropdown para Tipo de Vehículo -->
+                    <div class="field">
+                        <label class="label" for="idTipoVehiculo">Tipo de Vehículo</label>
+                        <div class="control">
+                            <div class="select is-fullwidth">
+                                <select id="idTipoVehiculo" required>
+                                    <option value="">Cargando tipos...</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dropdown para Socio Dueño -->
+                    <div class="field">
+                        <label class="label" for="idSocioDueño">Socio Dueño</label>
+                        <div class="control">
+                            <div class="select is-fullwidth">
+                                <select id="idSocioDueño" required>
+                                    <option value="">Cargando socios...</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <div id="modalErrorMessage" class="notification is-danger is-light mt-3" style="display: none;"></div>
+            </section>
+            <footer class="modal-card-foot is-justify-content-flex-end">
+                <button class="button is-success" id="btnGuardar">Guardar Cambios</button>
+                <button class="button" id="btnCancelar">Cancelar</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Modal CONFIRMACIÓN (ELIMINAR) -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head has-background-danger">
+                <p class="modal-card-title has-text-white">Confirmar Eliminación</p>
+                <button class="delete" aria-label="close"></button>
+            </header>
+            <section class="modal-card-body">
+                <p>¿Estás seguro de que deseas eliminar el vehículo <strong id="deleteVehiculoNameText"></strong>?</p>
+                <p><strong>Esta acción no se puede deshacer.</strong></p>
+                <input type="hidden" id="vehiculoIdParaEliminar">
+            </section>
+            <footer class="modal-card-foot is-justify-content-flex-end">
+                <button class="button is-danger" id="btnConfirmarEliminar">Eliminar</button>
+                <button class="button" id="btnCancelarEliminar">Cancelar</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- =======================
+         JAVASCRIPT
+    ======================== -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        
+        // URLs de las APIs
+        const API_URL = /*[[@{/api/vehiculos}]]*/ '/api/vehiculos';
+        const API_SOCIOS = /*[[@{/api/socios}]]*/ '/api/socios';
+        const API_TIPOS_VEHICULO = /*[[@{/api/tipos-vehiculo}]]*/ '/api/tipos-vehiculo'; // ¡NUEVA API!
+
+        // Elementos del DOM
+        const tableBody = document.getElementById('vehiculosTableBody');
+        const vehiculoModal = document.getElementById('vehiculoModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const vehiculoForm = document.getElementById('vehiculoForm');
+        const vehiculoIdInput = document.getElementById('vehiculoId');
+        const modalErrorMessage = document.getElementById('modalErrorMessage');
+        const btnGuardar = document.getElementById('btnGuardar');
+        const deleteModal = document.getElementById('deleteModal');
+        const vehiculoIdParaEliminarInput = document.getElementById('vehiculoIdParaEliminar');
+        const deleteVehiculoNameText = document.getElementById('deleteVehiculoNameText');
+        const btnConfirmarEliminar = document.getElementById('btnConfirmarEliminar');
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notificationMessage');
+        
+        // Dropdowns del Formulario
+        const selectTipoVehiculo = document.getElementById('idTipoVehiculo');
+        const selectSocioDueño = document.getElementById('idSocioDueño');
+
+        // Funciones de Notificación (igual que en socios.html)
+        function showNotification(message, isError = false) {
+            notificationMessage.textContent = message;
+            notification.className = 'notification';
+            notification.classList.add(isError ? 'is-danger' : 'is-success', 'is-light');
+            notification.style.display = 'block';
+            setTimeout(() => notification.style.display = 'none', 3000);
+        }
+
+        /**
+         * Carga los datos para los <select> del formulario (Socios y Tipos de Vehículo)
+         */
+        async function cargarDropdowns() {
+            try {
+                // Cargar Socios
+                const sociosResponse = await fetch(API_SOCIOS);
+                if (!sociosResponse.ok) throw new Error('No se pudieron cargar los socios');
+                const socios = await sociosResponse.json();
+                selectSocioDueño.innerHTML = '<option value="">Seleccione un socio</option>';
+                socios.forEach(socio => {
+                    selectSocioDueño.innerHTML += `<option value="${socio.idSocio}">${socio.nombre} ${socio.apellido}</option>`;
+                });
+
+                // Cargar Tipos de Vehículo
+                const tiposResponse = await fetch(API_TIPOS_VEHICULO);
+                if (!tiposResponse.ok) throw new Error('No se pudieron cargar los tipos de vehículo');
+                const tipos = await tiposResponse.json();
+                selectTipoVehiculo.innerHTML = '<option value="">Seleccione un tipo</option>';
+                tipos.forEach(tipo => {
+                    selectTipoVehiculo.innerHTML += `<option value="${tipo.idTipoVehiculo}">${tipo.denominacion}</option>`;
+                });
+
+            } catch (error) {
+                console.error('Error cargando dropdowns:', error);
+                showNotification(error.message, true);
+            }
+        }
+
+        /**
+         * Carga todos los vehículos desde la API
+         */
+        async function cargarVehiculos() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error(`Error ${response.status}: ${await response.text()}`);
+                const vehiculos = await response.json();
+
+                if (vehiculos.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="has-text-centered">No se encontraron vehículos.</td></tr>';
+                    return;
+                }
+
+                tableBody.innerHTML = vehiculos.map(v => `
+                    <tr>
+                        <td>${v.idVehiculo}</td>
+                        <td>${v.matricula}</td>
+                        <td>${v.marca || 'N/A'}</td>
+                        <td>${v.tipoVehiculo.denominacion}</td>
+                        <td>${v.socioDueño.nombre} ${v.socioDueño.apellido}</td>
+                        <td>
+                            <button class="button is-small is-info" onclick="abrirModalEditar(${v.idVehiculo})">
+                                <span class="icon"><i class="fas fa-edit"></i></span>
+                            </button>
+                            <button class="button is-small is-danger" onclick="abrirModalEliminar(${v.idVehiculo}, '${v.matricula}')">
+                                <span class="icon"><i class="fas fa-trash"></i></span>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error en cargarVehiculos:', error);
+                tableBody.innerHTML = `<tr><td colspan="6" class="has-text-centered has-text-danger">${error.message}</td></tr>`;
+                showNotification(error.message, true);
+            }
+        }
+
+        /**
+         * Abre el modal para crear un nuevo vehículo.
+         */
+        function abrirModalCrear() {
+            vehiculoForm.reset();
+            vehiculoIdInput.value = '';
+            modalTitle.textContent = 'Registrar Nuevo Vehículo';
+            modalErrorMessage.style.display = 'none';
+            // Resetea los dropdowns
+            selectTipoVehiculo.value = "";
+            selectSocioDueño.value = "";
+            vehiculoModal.classList.add('is-active');
+        }
+
+        /**
+         * Abre el modal para editar un vehículo.
+         */
+        async function abrirModalEditar(id) {
+            try {
+                const response = await fetch(`${API_URL}/${id}`);
+                if (!response.ok) throw new Error('No se pudo cargar el vehículo.');
+                const v = await response.json();
+
+                vehiculoIdInput.value = v.idVehiculo;
+                document.getElementById('matricula').value = v.matricula;
+                document.getElementById('marca').value = v.marca || '';
+                document.getElementById('profundidad').value = v.profundidad || '';
+                document.getElementById('alto').value = v.alto || '';
+                document.getElementById('ancho').value = v.ancho || '';
+                
+                // Selecciona los valores en los dropdowns
+                selectTipoVehiculo.value = v.tipoVehiculo.idTipoVehiculo;
+                selectSocioDueño.value = v.socioDueño.idSocio;
+
+                modalTitle.textContent = 'Editar Vehículo';
+                modalErrorMessage.style.display = 'none';
+                vehiculoModal.classList.add('is-active');
+
+            } catch (error) {
+                console.error('Error en abrirModalEditar:', error);
+                showNotification(error.message, true);
+            }
+        }
+
+        function cerrarModal() {
+            vehiculoModal.classList.remove('is-active');
+        }
+
+        /**
+         * Guarda (Crea o Actualiza) un vehículo.
+         */
+        async function guardarVehiculo(event) {
+            event.preventDefault();
+            const id = vehiculoIdInput.value;
+            const esNuevo = id === '';
+            const method = esNuevo ? 'POST' : 'PUT';
+            const url = esNuevo ? API_URL : `${API_URL}/${id}`;
+            
+            btnGuardar.classList.add('is-loading');
+            modalErrorMessage.style.display = 'none';
+
+            // Construye el DTO de entrada
+            const vehiculoDTO = {
+                matricula: document.getElementById('matricula').value,
+                marca: document.getElementById('marca').value || null,
+                profundidad: parseInt(document.getElementById('profundidad').value) || null,
+                alto: parseInt(document.getElementById('alto').value) || null,
+                ancho: parseInt(document.getElementById('ancho').value) || null,
+                idTipoVehiculo: parseInt(selectTipoVehiculo.value),
+                idSocioDueño: parseInt(selectSocioDueño.value)
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(vehiculoDTO)
+                });
+
+                if (!response.ok) {
+                    const errorMsg = await response.text();
+                    throw new Error(errorMsg || 'Error al guardar el vehículo.');
+                }
+                
+                cerrarModal();
+                await cargarVehiculos();
+                showNotification(`Vehículo ${esNuevo ? 'creado' : 'actualizado'} exitosamente.`, false);
+            } catch (error) {
+                console.error('Error en guardarVehiculo:', error);
+                modalErrorMessage.textContent = error.message;
+                modalErrorMessage.style.display = 'block';
+            } finally {
+                btnGuardar.classList.remove('is-loading');
+            }
+        }
+
+        /**
+         * Abre el modal de confirmación para eliminar.
+         */
+        function abrirModalEliminar(id, matricula) {
+            vehiculoIdParaEliminarInput.value = id;
+            deleteVehiculoNameText.textContent = `con matrícula ${matricula}`;
+            deleteModal.classList.add('is-active');
+        }
+
+        function cerrarModalEliminar() {
+            deleteModal.classList.remove('is-active');
+        }
+
+        /**
+         * Confirma y ejecuta la eliminación.
+         */
+        async function confirmarEliminacion() {
+            const id = vehiculoIdParaEliminarInput.value;
+            btnConfirmarEliminar.classList.add('is-loading');
+            try {
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) {
+                    const errorMsg = await response.text();
+                    throw new Error(errorMsg || 'Error al eliminar el vehículo.');
+                }
+                cerrarModalEliminar();
+                await cargarVehiculos();
+                showNotification('Vehículo eliminado exitosamente.', false);
+            } catch (error) {
+                console.error('Error en confirmarEliminacion:', error);
+                showNotification(error.message, true);
+            } finally {
+                btnConfirmarEliminar.classList.remove('is-loading');
+            }
+        }
+
+        // --- Event Listeners Globales ---
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarVehiculos();
+            cargarDropdowns(); // Carga los dropdowns al iniciar
+        });
+        
+        document.getElementById('btnNuevoVehiculo').addEventListener('click', abrirModalCrear);
+        btnGuardar.addEventListener('click', guardarVehiculo);
+control
+        btnConfirmarEliminar.addEventListener('click', confirmarEliminacion);
+
+        (document.querySelectorAll('.modal-background, .modal .delete, #btnCancelar, #btnCancelarEliminar') || []).forEach(($close) => {
+            const $target = $close.closest('.modal');
+            $close.addEventListener('click', () => $target.classList.remove('is-active'));
+        });
+
+        (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+            const $notification = $delete.parentNode;
+            $delete.addEventListener('click', () => $notification.style.display = 'none');
+        });
+
+        /*]]>*/
+    </script>
+</section>
+</body>
+</html>

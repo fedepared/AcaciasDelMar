@@ -25,7 +25,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
             String authorityName = authority.getAuthority();
             
             if(authorityName.equals("ROLE_ADMINISTRADOR")){
-                response.sendRedirect("admin/home");
+                response.sendRedirect("admin/socios");
                 return;
             }
             if(authorityName.equals("ROLE_EMPLEADO"))
@@ -35,7 +35,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
             }
         }
         
-        response.sendRedirect("socio/home");
+        response.sendRedirect("home");
         
         
     }

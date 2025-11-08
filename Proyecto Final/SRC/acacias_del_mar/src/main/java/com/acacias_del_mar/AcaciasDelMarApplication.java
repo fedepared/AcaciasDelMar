@@ -11,7 +11,7 @@ public class AcaciasDelMarApplication {
             System.out.println("==============================================");
             System.out.println("Acacias del mar");
             System.out.println("URL: http://localhost:8080/acaciasDelMar");
-            System.out.println("API REST: http://localhost:8080/acaciasDelMar/api/contactos");
+            System.out.println("API REST: http://localhost:8080/acaciasDelMar/api");
             System.out.println("==============================================");
 	}
 

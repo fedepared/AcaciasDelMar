@@ -1,40 +1,106 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-    
-    
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Acacias del Mar</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
-    <!-- para agregar el token CSRF para las peticiones futuras -->
-<!--    <meta name="_csrf" th:content="${_csrf.token}"/>
-    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        .hero-body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-box {
+            max-width: 400px;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-    <h2>Login</h2>
-    
-    <div th:if="${param.error}" style="color: red;">
-        Nombre de usuario o contraseña incorrectos.
-    </div>
-    
-    <div th:if="${param.logout}" style="color: green;">
-        Has cerrado sesión.
-    </div>
-    
-    <div th:if="${param.register_success}" style="color: green;">
-        ¡Registro exitoso! Por favor, inicia sesión.
-    </div>
+    <section class="hero is-primary is-fullheight">
+        <div class="hero-body">
+            <div class="container">
+                <div class="columns is-centered">
+                    <div class="column is-4-desktop is-6-tablet">
+                        
+                        <div class="box login-box p-5">
+                            <div class="has-text-centered mb-4">
+                                <i class="fas fa-water fa-3x"></i>
+                                <h2 class="title is-3 has-text-dark">Acacias del Mar</h2>
+                                <p class="subtitle is-6 has-text-grey">Por favor, inicia sesión</p>
+                            </div>
+                            
+                            <!-- Mensaje de Error (si ?error=true) -->
+                            <div th:if="${param.error}" class="notification is-danger is-light">
+                                <button class="delete"></button>
+                                Nombre de usuario o contraseña incorrectos.
+                            </div>
+                            
+                            <!-- Mensaje de Logout (si ?logout=true) -->
+                            <div th:if="${param.logout}" class="notification is-success is-light">
+                                <button class="delete"></button>
+                                Has cerrado sesión exitosamente.
+                            </div>
 
-    <form th:action="@{/login-process}" method="post">
-        <div>
-            <label>Usuario: <input type="text" name="username" required/></label>
+                            <!-- Mensaje de Registro (si ?register_success=true) -->
+                            <div th:if="${param.register_success}" class="notification is-success is-light">
+                                <button class="delete"></button>
+                                ¡Registro exitoso! Ya puedes iniciar sesión.
+                            </div>
+
+                            <!-- Formulario de Login -->
+                            <!-- El 'action' DEBE ser el 'loginProcessingUrl' de SecurityConfig -->
+                            <form th:action="@{/login-process}" method="post">
+                                <div class="field">
+                                    <label class="label">Usuario</label>
+                                    <div class="control has-icons-left">
+                                        <!-- 'name="username"' es REQUERIDO por Spring Security -->
+                                        <input class="input" type="text" name="username" placeholder="Tu usuario" required>
+                                        <span class="icon is-small is-left"><i class="fas fa-user"></i></span>
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <label class="label">Contraseña</label>
+                                    <div class="control has-icons-left">
+                                        <!-- 'name="password"' es REQUERIDO por Spring Security -->
+                                        <input class="input" type="password" name="password" placeholder="Tu contraseña" required>
+                                        <span class="icon is-small is-left"><i class="fas fa-lock"></i></span>
+                                    </div>
+                                </div>
+
+                                <div class="field mt-5">
+                                    <div class="control">
+                                        <button class="button is-primary is-fullwidth is-medium" type="submit">
+                                            Iniciar Sesión
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                            
+                            <hr>
+                            <div class="has-text-centered">
+                                <a th:href="@{/register}">¿No tienes cuenta? Regístrate aquí</a>
+                            </div>
+                        </div> <!-- fin .box -->
+                    </div>
+                </div>
+            </div>
         </div>
-        <div>
-            <label>Contraseña: <input type="password" name="password" required/></label>
-        </div>
-        <div>
-            <button type="submit">Iniciar Sesión</button>
-        </div>
-    </form>
-    <a th:href="@{/register}">¿No tienes cuenta? Regístrate</a>
+    </section>
+    
+    <!-- Script para cerrar notificaciones -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+                const $notification = $delete.parentNode;
+                $delete.addEventListener('click', () => {
+                    $notification.parentNode.removeChild($notification);
+                });
+            });
+        });
+    </script>
 </body>
 </html>

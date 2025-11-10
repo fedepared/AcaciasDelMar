@@ -1,6 +1,7 @@
 package com.acacias_del_mar.controllers.BackEnd;
 
 import com.acacias_del_mar.DTOs.TipoVehiculoDTO;
+import com.acacias_del_mar.DTOs.TipoVehiculoResponseDTO;
 import com.acacias_del_mar.entities.TipoVehiculo;
 import com.acacias_del_mar.services.TipoVehiculo.TipoVehiculoService;
 import jakarta.validation.Valid;
@@ -27,7 +28,7 @@ public class TipoVehiculoRestController {
     private TipoVehiculoService tipoVehiculoService;
 
     @GetMapping
-    public ResponseEntity<List<TipoVehiculoDTO>> obtenerTodos() {
+    public ResponseEntity<List<TipoVehiculoResponseDTO>> obtenerTodos() {
         return ResponseEntity.ok(tipoVehiculoService.obtenerTodos());
     }
 }

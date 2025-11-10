@@ -1,98 +1,194 @@
-<!DOCTYPE html>
+<!-- 1. Heredamos de la plantilla 'layout' -->
 <html lang="es" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{layout :: layout(~{::title}, ~{::content})}">
 
-<head>
-    <title th:fragment="title">Dashboard Empleado</title>
-</head>
+    <head>
+        <title th:fragment="title">Portal Empleado</title>
+    </head>
 
-<body>
-<section class="section" th:fragment="content">
+    <body>
+        <section class="section" th:fragment="content">
 
-    <h1 class="title is-2">Consulta de Asignaciones (Empleado-Zona)</h1>
-    <p class="subtitle is-5">Aquí puedes ver todas las asignaciones de empleados a las zonas del camping.</p>
+            <h1 class="title is-2">Portal de Empleado</h1>
+            <p class="subtitle is-5">Consulta de información interna.</p>
 
-    <div id="notification" class="notification" style="display: none;">
-        <button class="delete"></button>
-        <span id="notificationMessage"></span>
-    </div>
+            <div id="notification" class="notification" style="display: none;">
+                <button class="delete"></button>
+                <span id="notificationMessage"></span>
+            </div>
 
-    <!-- Tabla de Asignaciones -->
-    <div class="table-container mt-4">
-        <table class="table is-fullwidth is-striped is-hoverable">
-            <thead>
-                <tr>
-                    <th>ID Asignación</th>
-                    <th>Empleado</th>
-                    <th>Zona</th>
-                </tr>
-            </thead>
-            <tbody id="asignacionesTableBody">
-                <tr>
-                    <td colspan="3" class="has-text-centered">
-                        <span class="icon is-large"><i class="fas fa-spinner fa-spin fa-2x"></i></span>
-                        <p>Cargando asignaciones...</p>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+            <!-- =======================
+                 TABS DE NAVEGACIÓN
+            ======================== -->
+            <div class="tabs is-boxed">
+                <ul>
+                    <!-- Pestaña 1 (activa por defecto) -->
+                    <li class="is-active" data-tab="empleadosTab">
+                        <a>
+                            <span class="icon is-small"><i class="fas fa-users" aria-hidden="true"></i></span>
+                            <span>Compañeros</span>
+                        </a>
+                    </li>
+                    <!-- Pestaña 2 -->
+                    <li data-tab="asignacionesTab">
+                        <a>
+                            <span class="icon is-small"><i class="fas fa-user-tag" aria-hidden="true"></i></span>
+                            <span>Asignaciones de Zona</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
 
-    <!-- JavaScript para cargar la API -->
-    <script th:inline="javascript">
-        /*<![CDATA[*/
-        
-        const API_URL = /*[[@{/api/asignaciones-empleado-zona}]]*/ '/api/asignaciones-empleado-zona';
-        const tableBody = document.getElementById('asignacionesTableBody');
-        const notification = document.getElementById('notification');
-        const notificationMessage = document.getElementById('notificationMessage');
+            <!-- =======================
+                 CONTENIDO DE TABS
+            ======================== -->
 
-        function showNotification(message, isError = false) {
-            notificationMessage.textContent = message;
-            notification.className = 'notification';
-            notification.classList.add(isError ? 'is-danger' : 'is-success', 'is-light');
-            notification.style.display = 'block';
-            setTimeout(() => notification.style.display = 'none', 3000);
-        }
+            <!-- 1. Tab Lista de Empleados (Compañeros) -->
+            <div id="empleadosTab" class="content-tab">
+                <h3 class="title is-4">Lista de Compañeros</h3>
+                <div class="table-container">
+                    <table class="table is-fullwidth is-striped is-hoverable">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Apellido</th>
+                                <th>Especialidad</th>
+                                <th>Teléfono</th>
+                            </tr>
+                        </thead>
+                        <tbody id="empleadosTableBody">
+                            <tr>
+                                <td colspan="4" class="has-text-centered">
+                                    <span class="icon is-large"><i class="fas fa-spinner fa-spin fa-2x"></i></span>
+                                    <p>Cargando compañeros...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-        async function cargarAsignaciones() {
-            try {
-                const response = await fetch(API_URL);
-                if (!response.ok) {
-                    throw new Error(`Error ${response.status}: No se pudo cargar la información.`);
+            <!-- 2. Tab Asignaciones E-Z -->
+            <div id="asignacionesTab" class="content-tab" style="display: none;">
+                <h3 class="title is-4">Asignaciones de Empleados a Zonas</h3>
+                <div class="table-container">
+                    <table class="table is-fullwidth is-striped is-hoverable">
+                        <thead>
+                            <tr>
+                                <th>ID Asignación</th>
+                                <th>Empleado</th>
+                                <th>Zona Asignada</th>
+                            </tr>
+                        </thead>
+                        <tbody id="asignacionesEzTableBody">
+                            <tr>
+                                <td colspan="3" class="has-text-centered">
+                                    <span class="icon is-large"><i class="fas fa-spinner fa-spin fa-2x"></i></span>
+                                    <p>Cargando asignaciones...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- =======================
+                 JAVASCRIPT
+            ======================== -->
+            <script th:inline="javascript">
+                /*<![CDATA[*/
+
+                // URLs de las APIs (construidas por Thymeleaf)
+                const API_ASIGNACIONES_EZ = /*[[@{/api/asignaciones-empleado-zona}]]*/ '/api/asignaciones-empleado-zona';
+                const API_EMPLEADOS = /*[[@{/api/empleados}]]*/ '/api/empleados';
+
+                // --- Lógica de Notificación ---
+                const notification = document.getElementById('notification');
+                const notificationMessage = document.getElementById('notificationMessage');
+                function showNotification(message, isError = false) {
+                    notificationMessage.textContent = message;
+                    notification.className = 'notification';
+                    notification.classList.add(isError ? 'is-danger' : 'is-success', 'is-light');
+                    notification.style.display = 'block';
+                    setTimeout(() => notification.style.display = 'none', 3000);
                 }
-                const asignaciones = await response.json();
+                (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+                    const $notification = $delete.parentNode;
+                    $delete.addEventListener('click', () => $notification.style.display = 'none');
+                });
 
-                if (asignaciones.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="3" class="has-text-centered">No se encontraron asignaciones.</td></tr>';
-                    return;
+                // --- Lógica de TABS (Pestañas) ---
+                const tabs = document.querySelectorAll('.tabs li');
+                const tabContents = document.querySelectorAll('.content-tab');
+
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        // Desactiva todos
+                        tabs.forEach(t => t.classList.remove('is-active'));
+                        tabContents.forEach(c => c.style.display = 'none');
+
+                        // Activa el clickeado
+                        tab.classList.add('is-active');
+                        document.getElementById(tab.dataset.tab).style.display = 'block';
+                    });
+                });
+
+                // --- Lógica de Carga de APIs ---
+
+                /**
+                 * Función genérica para cargar datos de una API en una tabla
+                 * @param {string} url - La URL de la API
+                 * @param {HTMLElement} tableBody - El <tbody> de la tabla
+                 * @param {function} rowMapper - La función que convierte un objeto a un <tr>
+                 */
+                async function loadApiData(url, tableBody, rowMapper, colspan) {
+                    tableBody.innerHTML = `<tr><td colspan="${colspan}" class="has-text-centered"><span class="icon is-large"><i class="fas fa-spinner fa-spin fa-2x"></i></span><p>Cargando...</p></td></tr>`;
+                    try {
+                        const response = await fetch(url);
+                        if (!response.ok) {
+                            throw new Error(`Error ${response.status} al cargar ${url}`);
+                        }
+                        const data = await response.json();
+
+                        if (data.length === 0) {
+                            tableBody.innerHTML = `<tr><td colspan="${colspan}" class="has-text-centered">No se encontraron datos.</td></tr>`;
+                            return;
+                        }
+                        tableBody.innerHTML = data.map(rowMapper).join('');
+                    } catch (error) {
+                        console.error('Error:', error);
+                        tableBody.innerHTML = `<tr><td colspan="${colspan}" class="has-text-centered has-text-danger">${error.message}</td></tr>`;
+                        showNotification(error.message, true);
+                    }
                 }
 
-                tableBody.innerHTML = asignaciones.map(asig => `
+                // Mapeadores de datos (cómo convertir JSON a <tr>)
+
+                const empleadoMapper = e => `
                     <tr>
-                        <td>${asig.idAsignacionEmpleadoZona}</td>
-                        <td>${asig.empleado.nombre} ${asig.empleado.apellido}</td>
-                        <td>Zona ${asig.zona.letra}</td>
-                    </tr>
-                `).join('');
+                        <td>${e.nombre}</td>
+                        <td>${e.apellido}</td>
+                        <td>${e.especialidad || 'N/A'}</td>
+                        <td>${e.telefono || 'N/A'}</td>
+                    </tr>`;
 
-            } catch (error) {
-                console.error('Error:', error);
-                tableBody.innerHTML = `<tr><td colspan="3" class="has-text-centered has-text-danger">${error.message}</td></tr>`;
-                showNotification(error.message, true);
-            }
-        }
-        
-        document.addEventListener('DOMContentLoaded', cargarAsignaciones);
-        
-        (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
-            const $notification = $delete.parentNode;
-            $delete.addEventListener('click', () => {
-                $notification.style.display = 'none';
-            });
-        });
-        /*]]>*/
-    </script>
-</section>
-</body>
+                const asignacionEzMapper = a => `
+                    <tr>
+                        <td>${a.idAsignacionEmpleadoZona}</td>
+                        <td>${a.empleado ? (a.empleado.nombre + ' ' + a.empleado.apellido) : 'N/A'}</td>
+                        <td>Zona ${a.zona ? a.zona.letra : 'N/A'} (${a.zona && a.zona.tipoVehiculo ? a.zona.tipoVehiculo.denominacion : 'N/A'})</td>
+                    </tr>`;
+
+                // Carga inicial
+                document.addEventListener('DOMContentLoaded', () => {
+                    // Carga la primera pestaña (Empleados)
+                    loadApiData(API_EMPLEADOS, document.getElementById('empleadosTableBody'), empleadoMapper, 4);
+                    // Carga la segunda pestaña (Asignaciones)
+                    loadApiData(API_ASIGNACIONES_EZ, document.getElementById('asignacionesEzTableBody'), asignacionEzMapper, 3);
+                });
+
+                /*]]>*/
+            </script>
+        </section>
+    </body>
 </html>

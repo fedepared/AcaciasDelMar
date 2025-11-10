@@ -30,12 +30,12 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
             }
             if(authorityName.equals("ROLE_EMPLEADO"))
             {
-                response.sendRedirect("/empleado/home");
+                response.sendRedirect("empleado/dashboard");
                 return;
             }
         }
         
-        response.sendRedirect("home");
+        response.sendRedirect("socio/dashboard");
         
         
     }

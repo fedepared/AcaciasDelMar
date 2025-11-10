@@ -1,6 +1,7 @@
 package com.acacias_del_mar.services.Empleado;
 
 import com.acacias_del_mar.DTOs.EmpleadoDTO;
+import com.acacias_del_mar.DTOs.EmpleadoResponseDTO;
 import com.acacias_del_mar.DTOs.EntityMapper;
 import com.acacias_del_mar.entities.Empleado;
 import com.acacias_del_mar.repositories.EmpleadoRepository;
@@ -19,7 +20,7 @@ public class EmpleadoServicImpl implements EmpleadoService {
             
     @Override
     @Transactional(readOnly = true)
-    public List<EmpleadoDTO> obtenerTodos() {
+    public List<EmpleadoResponseDTO> obtenerTodos() {
         return empleadoRepository.findAll().stream()
                 .map(mapper::toResponseDTO)
                 .collect(Collectors.toList());
@@ -27,14 +28,14 @@ public class EmpleadoServicImpl implements EmpleadoService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<EmpleadoDTO> obtenerPorId(Integer id) {
+    public Optional<EmpleadoResponseDTO> obtenerPorId(Integer id) {
         return empleadoRepository.findById(id)
                 .map(mapper::toResponseDTO);
     }
 
     @Override
     @Transactional
-    public EmpleadoDTO crearEmpleado(EmpleadoDTO empleadoDTO) {
+    public EmpleadoResponseDTO crearEmpleado(EmpleadoDTO empleadoDTO) {
         
         Empleado nuevoEmpleado = mapper.toEntity(empleadoDTO);
         Empleado guardado = empleadoRepository.save(nuevoEmpleado);
@@ -42,7 +43,7 @@ public class EmpleadoServicImpl implements EmpleadoService {
     }
 
     @Override
-    public EmpleadoDTO actualizarEmpleado(Integer id, EmpleadoDTO empleadoDTO) {
+    public EmpleadoResponseDTO actualizarEmpleado(Integer id, EmpleadoDTO empleadoDTO) {
         Empleado empleadoExistente = empleadoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Ya existe ese empleado"));
         

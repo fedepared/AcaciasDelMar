@@ -1,6 +1,7 @@
 package com.acacias_del_mar.controllers.BackEnd;
 
 import com.acacias_del_mar.DTOs.EmpleadoDTO;
+import com.acacias_del_mar.DTOs.EmpleadoResponseDTO;
 import com.acacias_del_mar.entities.Empleado;
 import com.acacias_del_mar.services.Empleado.EmpleadoService;
 import jakarta.validation.Valid;
@@ -21,21 +22,24 @@ public class EmpleadoRestController {
     private EmpleadoService empleadoService;
 
     @GetMapping
-    public ResponseEntity<List<EmpleadoDTO>> obtenerTodos() {
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','SOCIO','EMPLEADO')")
+    public ResponseEntity<List<EmpleadoResponseDTO>> obtenerTodos() {
         return ResponseEntity.ok(empleadoService.obtenerTodos());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EmpleadoDTO> obtenerPorId(@PathVariable Integer id) {
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','SOCIO','EMPLEADO')")
+    public ResponseEntity<EmpleadoResponseDTO> obtenerPorId(@PathVariable Integer id) {
         return empleadoService.obtenerPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> crearEmpleado(@Valid @RequestBody EmpleadoDTO empleadoDTO) {
         try {
-            EmpleadoDTO empleadoCreado = empleadoService.crearEmpleado(empleadoDTO);
+            EmpleadoResponseDTO empleadoCreado = empleadoService.crearEmpleado(empleadoDTO);
             return new ResponseEntity<>(empleadoCreado, HttpStatus.CREATED);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -43,9 +47,10 @@ public class EmpleadoRestController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> actualizarEmpleado(@PathVariable Integer id, @Valid @RequestBody EmpleadoDTO empleadoDTO) {
         try {
-            EmpleadoDTO empleadoActualizado = empleadoService.actualizarEmpleado(id, empleadoDTO);
+            EmpleadoResponseDTO empleadoActualizado = empleadoService.actualizarEmpleado(id, empleadoDTO);
             return ResponseEntity.ok(empleadoActualizado);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
@@ -53,6 +58,7 @@ public class EmpleadoRestController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> eliminarEmpleado(@PathVariable Integer id) {
         try {
             empleadoService.eliminarEmpleado(id);

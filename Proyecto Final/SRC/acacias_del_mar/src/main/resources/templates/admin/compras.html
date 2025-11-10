@@ -1,0 +1,377 @@
+<!-- 1. Heredamos de la plantilla 'layout' -->
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+
+    <head>
+        <title th:fragment="title">Gestión de Compras</title>
+    </head>
+
+    <body>
+        <section class="section" th:fragment="content">
+
+            <div class="is-flex is-justify-content-space-between is-align-items-center">
+                <h1 class="title is-2">Gestión de Compras de Garages</h1>
+                <button class="button is-primary" id="btnNuevaCompra">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Registrar Compra</span>
+                </button>
+            </div>
+            <p class="subtitle is-5">Asigna la propiedad de garages a socios.</p>
+
+            <!-- Notificación General -->
+            <div id="notification" class="notification" style="display: none;">
+                <button class="delete"></button>
+                <span id="notificationMessage"></span>
+            </div>
+
+            <!-- Tabla de Compras -->
+            <div class="table-container mt-4">
+                <table class="table is-fullwidth is-striped is-hoverable">
+                    <thead>
+                        <tr>
+                            <th>ID Compra</th>
+                            <th>Socio Comprador</th>
+                            <th>Garage (Número)</th>
+                            <th>Zona</th>
+                            <th>Fecha Compra</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comprasTableBody">
+                        <tr>
+                            <td colspan="6" class="has-text-centered">
+                                <span class="icon is-large"><i class="fas fa-spinner fa-spin fa-2x"></i></span>
+                                <p>Cargando compras...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- =======================
+                 Modal CREAR/EDITAR
+            ======================== -->
+            <div class="modal" id="compraModal">
+                <div class="modal-background"></div>
+                <div class="modal-card">
+                    <header class="modal-card-head">
+                        <p class="modal-card-title" id="modalTitle">Registrar Compra</p>
+                        <button class="delete" aria-label="close"></button>
+                    </header>
+                    <section class="modal-card-body">
+                        <form id="compraForm">
+                            <input type="hidden" id="compraId">
+
+                            <!-- Dropdown para Socio -->
+                            <div class="field">
+                                <label class="label" for="idSocio">Socio Comprador</label>
+                                <div class="control">
+                                    <div class="select is-fullwidth">
+                                        <select id="idSocio" required>
+                                            <option value="">Cargando socios...</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dropdown para Garage -->
+                            <div class="field">
+                                <label class="label" for="idGarage">Garage</label>
+                                <div class="control">
+                                    <div class="select is-fullwidth">
+                                        <select id="idGarage" required>
+                                            <option value="">Cargando garages...</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <label class="label" for="fechaCompra">Fecha de Compra</label>
+                                <div class="control">
+                                    <input class="input" type="date" id="fechaCompra" required>
+                                </div>
+                            </div>
+
+                        </form>
+                        <div id="modalErrorMessage" class="notification is-danger is-light mt-3" style="display: none;"></div>
+                    </section>
+                    <footer class="modal-card-foot is-justify-content-flex-end">
+                        <button class="button is-success" id="btnGuardar">Guardar Cambios</button>
+                        <button class="button" id="btnCancelar">Cancelar</button>
+                    </footer>
+                </div>
+            </div>
+
+            <!-- Modal CONFIRMACIÓN (ELIMINAR) -->
+            <div class="modal" id="deleteModal">
+                <div class="modal-background"></div>
+                <div class="modal-card">
+                    <header class="modal-card-head has-background-danger">
+                        <p class="modal-card-title has-text-white">Confirmar Eliminación</p>
+                        <button class="delete" aria-label="close"></button>
+                    </header>
+                    <section class="modal-card-body">
+                        <p>¿Estás seguro de que deseas eliminar la compra <strong id="deleteCompraNameText"></strong>?</p>
+                        <p><strong>Esta acción no se puede deshacer.</strong></p>
+                        <input type="hidden" id="compraIdParaEliminar">
+                    </section>
+                    <footer class="modal-card-foot is-justify-content-flex-end">
+                        <button class="button is-danger" id="btnConfirmarEliminar">Eliminar</button>
+                        <button class="button" id="btnCancelarEliminar">Cancelar</button>
+                    </footer>
+                </div>
+            </div>
+
+            <!-- =======================
+                 JAVASCRIPT
+            ======================== -->
+            <script th:inline="javascript">
+                /*<![CDATA[*/
+
+                const API_URL = /*[[@{/api/compra-garage}]]*/ '/api/compra-garage';
+                const API_SOCIOS = /*[[@{/api/socios}]]*/ '/api/socios';
+                const API_GARAGES = /*[[@{/api/garages}]]*/ '/api/garages';
+
+                // --- DOM Elements ---
+                const tableBody = document.getElementById('comprasTableBody');
+                const compraModal = document.getElementById('compraModal');
+                const modalTitle = document.getElementById('modalTitle');
+                const compraForm = document.getElementById('compraForm');
+                const compraIdInput = document.getElementById('compraId');
+                const modalErrorMessage = document.getElementById('modalErrorMessage');
+                const btnGuardar = document.getElementById('btnGuardar');
+                const deleteModal = document.getElementById('deleteModal');
+                const compraIdParaEliminarInput = document.getElementById('compraIdParaEliminar');
+                const deleteCompraNameText = document.getElementById('deleteCompraNameText');
+                const btnConfirmarEliminar = document.getElementById('btnConfirmarEliminar');
+                const notification = document.getElementById('notification');
+                const notificationMessage = document.getElementById('notificationMessage');
+                const selectSocio = document.getElementById('idSocio');
+                const selectGarage = document.getElementById('idGarage');
+
+                // --- Funciones de UI ---
+                function showNotification(message, isError = false) {
+                    notificationMessage.textContent = message;
+                    notification.className = 'notification';
+                    notification.classList.add(isError ? 'is-danger' : 'is-success', 'is-light');
+                    notification.style.display = 'block';
+                    setTimeout(() => notification.style.display = 'none', 3000);
+                }
+
+                function formatDate(dateString) {
+                    if (!dateString)
+                        return 'N/A';
+                    const [year, month, day] = dateString.split('-');
+                    return `${day}/${month}/${year}`;
+                }
+
+                /**
+                 * Carga los dropdowns del formulario
+                 */
+                async function cargarDropdowns() {
+                    try {
+                        // Cargar Socios
+                        const sociosResponse = await fetch(API_SOCIOS);
+                        if (!sociosResponse.ok)
+                            throw new Error('No se pudieron cargar los socios');
+                        const socios = await sociosResponse.json();
+                        selectSocio.innerHTML = '<option value="">Seleccione un socio</option>';
+                        socios.forEach(s => {
+                            selectSocio.innerHTML += `<option value="${s.idSocio}">${s.nombre} ${s.apellido}</option>`;
+                        });
+
+                        // Cargar Garages
+                        const garagesResponse = await fetch(API_GARAGES);
+                        if (!garagesResponse.ok)
+                            throw new Error('No se pudieron cargar los garages');
+                        const garages = await garagesResponse.json();
+                        selectGarage.innerHTML = '<option value="">Seleccione un garage</option>';
+                        garages.forEach(g => {
+                            selectGarage.innerHTML += `<option value="${g.idGarage}">Nº ${g.numero} (Zona ${g.zona.letra})</option>`;
+                        });
+
+                    } catch (error) {
+                        console.error('Error cargando dropdowns:', error);
+                        showNotification(error.message, true);
+                    }
+                }
+
+                /**
+                 * Carga todas las compras desde la API
+                 */
+                async function cargarCompras() {
+                    try {
+                        const response = await fetch(API_URL);
+                        if (!response.ok)
+                            throw new Error(`Error ${response.status}: ${await response.text()}`);
+                        const compras = await response.json();
+
+                        if (compras.length === 0) {
+                            tableBody.innerHTML = '<tr><td colspan="6" class="has-text-centered">No se encontraron compras registradas.</td></tr>';
+                            return;
+                        }
+
+                        tableBody.innerHTML = compras.map(c => `
+                            <tr>
+                                <td>${c.idComprasGarages}</td>
+                                <td>${c.socio.nombre} ${c.socio.apellido}</td>
+                                <td>Nº ${c.garage.numero}</td>
+                                <td>Zona ${c.garage.zona.letra}</td>
+                                <td>${formatDate(c.fechaCompra)}</td>
+                                <td>
+                                    <button class="button is-small is-info" onclick="abrirModalEditar(${c.idComprasGarages})">
+                                        <span class="icon"><i class="fas fa-edit"></i></span>
+                                    </button>
+                                    <button class="button is-small is-danger" onclick="abrirModalEliminar(${c.idComprasGarages}, ${c.idComprasGarages})">
+                                        <span class="icon"><i class="fas fa-trash"></i></span>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('');
+
+                    } catch (error) {
+                        console.error('Error en cargarCompras:', error);
+                        tableBody.innerHTML = `<tr><td colspan="6" class="has-text-centered has-text-danger">${error.message}</td></tr>`;
+                        showNotification(error.message, true);
+                    }
+                }
+
+                // --- Funciones de Modales ---
+
+                function abrirModalCrear() {
+                    compraForm.reset();
+                    compraIdInput.value = '';
+                    modalTitle.textContent = 'Registrar Nueva Compra';
+                    modalErrorMessage.style.display = 'none';
+                    selectSocio.value = "";
+                    selectGarage.value = "";
+                    compraModal.classList.add('is-active');
+                }
+
+                async function abrirModalEditar(id) {
+                    try {
+                        const response = await fetch(`${API_URL}/${id}`);
+                        if (!response.ok)
+                            throw new Error('No se pudo cargar la compra.');
+                        const c = await response.json();
+
+                        compraIdInput.value = c.idComprasGarages;
+                        document.getElementById('fechaCompra').value = c.fechaCompra;
+                        selectSocio.value = c.socio.idSocio;
+                        selectGarage.value = c.garage.idGarage;
+
+                        modalTitle.textContent = 'Editar Registro de Compra';
+                        modalErrorMessage.style.display = 'none';
+                        compraModal.classList.add('is-active');
+
+                    } catch (error) {
+                        console.error('Error en abrirModalEditar:', error);
+                        showNotification(error.message, true);
+                    }
+                }
+
+                function cerrarModal() {
+                    compraModal.classList.remove('is-active');
+                }
+
+                async function guardarCompra(event) {
+                    event.preventDefault();
+                    const id = compraIdInput.value;
+                    const esNuevo = id === '';
+                    const method = esNuevo ? 'POST' : 'PUT';
+                    const url = esNuevo ? API_URL : `${API_URL}/${id}`;
+
+                    btnGuardar.classList.add('is-loading');
+                    modalErrorMessage.style.display = 'none';
+
+                    const compraDTO = {
+                        idSocio: parseInt(selectSocio.value),
+                        idGarage: parseInt(selectGarage.value),
+                        fechaCompra: document.getElementById('fechaCompra').value
+                    };
+
+                    if (!compraDTO.idSocio || !compraDTO.idGarage) {
+                        modalErrorMessage.textContent = "Debe seleccionar un socio y un garage.";
+                        modalErrorMessage.style.display = 'block';
+                        btnGuardar.classList.remove('is-loading');
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(url, {
+                            method: method,
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(compraDTO)
+                        });
+                        if (!response.ok) {
+                            const errorMsg = await response.text();
+                            throw new Error(errorMsg || 'Error al guardar la compra.');
+                        }
+                        cerrarModal();
+                        await cargarCompras();
+                        showNotification(`Compra ${esNuevo ? 'registrada' : 'actualizada'} exitosamente.`, false);
+                    } catch (error) {
+                        console.error('Error en guardarCompra:', error);
+                        modalErrorMessage.textContent = error.message;
+                        modalErrorMessage.style.display = 'block';
+                    } finally {
+                        btnGuardar.classList.remove('is-loading');
+                    }
+                }
+
+                function abrirModalEliminar(id, nombre) {
+                    compraIdParaEliminarInput.value = id;
+                    deleteCompraNameText.textContent = `Nº ${nombre}`;
+                    deleteModal.classList.add('is-active');
+                }
+
+                function cerrarModalEliminar() {
+                    deleteModal.classList.remove('is-active');
+                }
+
+                async function confirmarEliminacion() {
+                    const id = compraIdParaEliminarInput.value;
+                    btnConfirmarEliminar.classList.add('is-loading');
+                    try {
+                        const response = await fetch(`${API_URL}/${id}`, {method: 'DELETE'});
+                        if (!response.ok) {
+                            const errorMsg = await response.text();
+                            throw new Error(errorMsg || 'Error al eliminar.');
+                        }
+                        cerrarModalEliminar();
+                        await cargarCompras();
+                        showNotification('Registro de compra eliminado exitosamente.', false);
+                    } catch (error) {
+                        console.error('Error en confirmarEliminacion:', error);
+                        showNotification(error.message, true);
+                    } finally {
+                        btnConfirmarEliminar.classList.remove('is-loading');
+                    }
+                }
+
+                // --- Event Listeners Globales ---
+                document.addEventListener('DOMContentLoaded', () => {
+                    cargarCompras();
+                    cargarDropdowns();
+                });
+
+                document.getElementById('btnNuevaCompra').addEventListener('click', abrirModalCrear);
+                btnGuardar.addEventListener('click', guardarCompra);
+                btnConfirmarEliminar.addEventListener('click', confirmarEliminacion);
+
+                (document.querySelectorAll('.modal-background, .modal .delete, #btnCancelar, #btnCancelarEliminar') || []).forEach(($close) => {
+                    const $target = $close.closest('.modal');
+                    $close.addEventListener('click', () => $target.classList.remove('is-active'));
+                });
+
+                (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+                    const $notification = $delete.parentNode;
+                    $delete.addEventListener('click', () => $notification.style.display = 'none');
+                });
+
+                /*]]>*/
+            </script>
+        </section>
+    </body>
+</html>

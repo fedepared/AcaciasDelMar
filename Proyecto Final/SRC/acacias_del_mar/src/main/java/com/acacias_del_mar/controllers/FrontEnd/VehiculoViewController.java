@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @RequestMapping("/admin/vehiculos")
 @PreAuthorize("hasRole('ADMINISTRADOR')")
-public class VehiculoController {
+public class VehiculoViewController {
 
     @GetMapping
     public String showVehiculosPage(Model model) {

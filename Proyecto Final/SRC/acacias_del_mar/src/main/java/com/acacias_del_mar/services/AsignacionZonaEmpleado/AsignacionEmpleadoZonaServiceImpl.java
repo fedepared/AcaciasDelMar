@@ -1,10 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.acacias_del_mar.services.AsignacionZonaEmpleado;
 
 import com.acacias_del_mar.DTOs.AsignacionEmpleadoZonaDTO;
+import com.acacias_del_mar.DTOs.AsignacionEmpleadoZonaResponseDTO;
 import com.acacias_del_mar.DTOs.EntityMapper;
 import com.acacias_del_mar.entities.AsignacionEmpleadoZona;
 import com.acacias_del_mar.entities.Empleado;
@@ -34,7 +31,7 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
     
     @Override
     @Transactional(readOnly = true)
-    public List<AsignacionEmpleadoZonaDTO> obtenerTodas() {
+    public List<AsignacionEmpleadoZonaResponseDTO> obtenerTodas() {
         return repository.findAll().stream()
                 .map(mapper::toResponseDTO)
                 .collect(Collectors.toList());
@@ -42,14 +39,14 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<AsignacionEmpleadoZonaDTO> obtenerPorId(Integer id) {
+    public Optional<AsignacionEmpleadoZonaResponseDTO> obtenerPorId(Integer id) {
         return repository.findById(id)
                 .map(mapper::toResponseDTO);
     }
 
     @Override
     @Transactional
-    public AsignacionEmpleadoZonaDTO crearAsignacion(AsignacionEmpleadoZonaDTO dto) {
+    public AsignacionEmpleadoZonaResponseDTO crearAsignacion(AsignacionEmpleadoZonaDTO dto) {
         Empleado empleado = empleadoRepository.findById(dto.getIdEmpleado())
                 .orElseThrow(() -> new RuntimeException("Empleado no encontrado..."));
         Zona zona = zonaRepository.findById(dto.getIdZona())
@@ -63,7 +60,7 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
 
     @Override
     @Transactional
-    public AsignacionEmpleadoZonaDTO actualizarAsignacion(Integer id, AsignacionEmpleadoZonaDTO dto) {
+    public AsignacionEmpleadoZonaResponseDTO actualizarAsignacion(Integer id, AsignacionEmpleadoZonaDTO dto) {
         
         AsignacionEmpleadoZona asignacionExistente = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Asignación no encontrada..."));

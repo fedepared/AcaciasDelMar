@@ -1,0 +1,377 @@
+<!-- 1. Heredamos de la plantilla 'layout' -->
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+
+    <head>
+        <title th:fragment="title">Gestión de Asignaciones (V-G)</title>
+    </head>
+
+    <body>
+        <section class="section" th:fragment="content">
+
+            <div class="is-flex is-justify-content-space-between is-align-items-center">
+                <h1 class="title is-2">Gestión de Asignaciones</h1>
+                <button class="button is-primary" id="btnNuevaAsignacion">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Asignar Vehículo</span>
+                </button>
+            </div>
+            <p class="subtitle is-5">Asigna vehículos a garages disponibles.</p>
+
+            <!-- Notificación General -->
+            <div id="notification" class="notification" style="display: none;">
+                <button class="delete"></button>
+                <span id="notificationMessage"></span>
+            </div>
+
+            <!-- Tabla de Asignaciones -->
+            <div class="table-container mt-4">
+                <table class="table is-fullwidth is-striped is-hoverable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Vehículo (Matrícula)</th>
+                            <th>Garage (Número)</th>
+                            <th>Zona</th>
+                            <th>Fecha Asignación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="asignacionesTableBody">
+                        <tr>
+                            <td colspan="6" class="has-text-centered">
+                                <span class="icon is-large"><i class="fas fa-spinner fa-spin fa-2x"></i></span>
+                                <p>Cargando asignaciones...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- =======================
+                 Modal CREAR/EDITAR
+            ======================== -->
+            <div class="modal" id="asignacionModal">
+                <div class="modal-background"></div>
+                <div class="modal-card">
+                    <header class="modal-card-head">
+                        <p class="modal-card-title" id="modalTitle">Crear Asignación</p>
+                        <button class="delete" aria-label="close"></button>
+                    </header>
+                    <section class="modal-card-body">
+                        <form id="asignacionForm">
+                            <input type="hidden" id="asignacionId">
+
+                            <!-- Dropdown para Vehículo -->
+                            <div class="field">
+                                <label class="label" for="idVehiculo">Vehículo</label>
+                                <div class="control">
+                                    <div class="select is-fullwidth">
+                                        <select id="idVehiculo" required>
+                                            <option value="">Cargando vehículos...</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dropdown para Garage -->
+                            <div class="field">
+                                <label class="label" for="idGarage">Garage</label>
+                                <div class="control">
+                                    <div class="select is-fullwidth">
+                                        <select id="idGarage" required>
+                                            <option value="">Cargando garages...</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <label class="label" for="fechaAsignacion">Fecha de Asignación</label>
+                                <div class="control">
+                                    <input class="input" type="date" id="fechaAsignacion" required>
+                                </div>
+                            </div>
+
+                        </form>
+                        <div id="modalErrorMessage" class="notification is-danger is-light mt-3" style="display: none;"></div>
+                    </section>
+                    <footer class="modal-card-foot is-justify-content-flex-end">
+                        <button class="button is-success" id="btnGuardar">Guardar Cambios</button>
+                        <button class="button" id="btnCancelar">Cancelar</button>
+                    </footer>
+                </div>
+            </div>
+
+            <!-- Modal CONFIRMACIÓN (ELIMINAR) -->
+            <div class="modal" id="deleteModal">
+                <div class="modal-background"></div>
+                <div class="modal-card">
+                    <header class="modal-card-head has-background-danger">
+                        <p class="modal-card-title has-text-white">Confirmar Eliminación</p>
+                        <button class="delete" aria-label="close"></button>
+                    </header>
+                    <section class="modal-card-body">
+                        <p>¿Estás seguro de que deseas eliminar la asignación <strong id="deleteAsignacionNameText"></strong>?</p>
+                        <p><strong>Esta acción no se puede deshacer.</strong></p>
+                        <input type="hidden" id="asignacionIdParaEliminar">
+                    </section>
+                    <footer class="modal-card-foot is-justify-content-flex-end">
+                        <button class="button is-danger" id="btnConfirmarEliminar">Eliminar</button>
+                        <button class="button" id="btnCancelarEliminar">Cancelar</button>
+                    </footer>
+                </div>
+            </div>
+
+            <!-- =======================
+                 JAVASCRIPT
+            ======================== -->
+            <script th:inline="javascript">
+                /*<![CDATA[*/
+
+                const API_URL = /*[[@{/api/asignaciones}]]*/ '/api/asignaciones';
+                const API_VEHICULOS = /*[[@{/api/vehiculos}]]*/ '/api/vehiculos';
+                const API_GARAGES = /*[[@{/api/garages}]]*/ '/api/garages';
+
+                // --- DOM Elements ---
+                const tableBody = document.getElementById('asignacionesTableBody');
+                const asignacionModal = document.getElementById('asignacionModal');
+                const modalTitle = document.getElementById('modalTitle');
+                const asignacionForm = document.getElementById('asignacionForm');
+                const asignacionIdInput = document.getElementById('asignacionId');
+                const modalErrorMessage = document.getElementById('modalErrorMessage');
+                const btnGuardar = document.getElementById('btnGuardar');
+                const deleteModal = document.getElementById('deleteModal');
+                const asignacionIdParaEliminarInput = document.getElementById('asignacionIdParaEliminar');
+                const deleteAsignacionNameText = document.getElementById('deleteAsignacionNameText');
+                const btnConfirmarEliminar = document.getElementById('btnConfirmarEliminar');
+                const notification = document.getElementById('notification');
+                const notificationMessage = document.getElementById('notificationMessage');
+                const selectVehiculo = document.getElementById('idVehiculo');
+                const selectGarage = document.getElementById('idGarage');
+
+                // --- Funciones de UI ---
+                function showNotification(message, isError = false) {
+                    notificationMessage.textContent = message;
+                    notification.className = 'notification';
+                    notification.classList.add(isError ? 'is-danger' : 'is-success', 'is-light');
+                    notification.style.display = 'block';
+                    setTimeout(() => notification.style.display = 'none', 3000);
+                }
+
+                function formatDate(dateString) {
+                    if (!dateString)
+                        return 'N/A';
+                    const [year, month, day] = dateString.split('-');
+                    return `${day}/${month}/${year}`;
+                }
+
+                /**
+                 * Carga los dropdowns del formulario
+                 */
+                async function cargarDropdowns() {
+                    try {
+                        // Cargar Vehículos
+                        const vehiculosResponse = await fetch(API_VEHICULOS);
+                        if (!vehiculosResponse.ok)
+                            throw new Error('No se pudieron cargar los vehículos');
+                        const vehiculos = await vehiculosResponse.json();
+                        selectVehiculo.innerHTML = '<option value="">Seleccione un vehículo</option>';
+                        vehiculos.forEach(v => {
+                            selectVehiculo.innerHTML += `<option value="${v.idVehiculo}">${v.matricula} (${v.socioDueño.nombre} ${v.socioDueño.apellido})</option>`;
+                        });
+
+                        // Cargar Garages
+                        const garagesResponse = await fetch(API_GARAGES);
+                        if (!garagesResponse.ok)
+                            throw new Error('No se pudieron cargar los garages');
+                        const garages = await garagesResponse.json();
+                        selectGarage.innerHTML = '<option value="">Seleccione un garage</option>';
+                        garages.forEach(g => {
+                            selectGarage.innerHTML += `<option value="${g.idGarage}">Nº ${g.numero} (Zona ${g.zona.letra})</option>`;
+                        });
+
+                    } catch (error) {
+                        console.error('Error cargando dropdowns:', error);
+                        showNotification(error.message, true);
+                    }
+                }
+
+                /**
+                 * Carga todas las asignaciones desde la API
+                 */
+                async function cargarAsignaciones() {
+                    try {
+                        const response = await fetch(API_URL);
+                        if (!response.ok)
+                            throw new Error(`Error ${response.status}: ${await response.text()}`);
+                        const asignaciones = await response.json();
+
+                        if (asignaciones.length === 0) {
+                            tableBody.innerHTML = '<tr><td colspan="6" class="has-text-centered">No se encontraron asignaciones.</td></tr>';
+                            return;
+                        }
+
+                        tableBody.innerHTML = asignaciones.map(a => `
+                            <tr>
+                                <td>${a.idAsignacion}</td>
+                                <td>${a.vehiculo.matricula}</td>
+                                <td>Nº ${a.garage.numero}</td>
+                                <td>Zona ${a.garage.zona.letra}</td>
+                                <td>${formatDate(a.fechaAsignacion)}</td>
+                                <td>
+                                    <button class="button is-small is-info" onclick="abrirModalEditar(${a.idAsignacion})">
+                                        <span class="icon"><i class="fas fa-edit"></i></span>
+                                    </button>
+                                    <button class="button is-small is-danger" onclick="abrirModalEliminar(${a.idAsignacion}, ${a.idAsignacion})">
+                                        <span class="icon"><i class="fas fa-trash"></i></span>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('');
+
+                    } catch (error) {
+                        console.error('Error en cargarAsignaciones:', error);
+                        tableBody.innerHTML = `<tr><td colspan="6" class="has-text-centered has-text-danger">${error.message}</td></tr>`;
+                        showNotification(error.message, true);
+                    }
+                }
+
+                // --- Funciones de Modales ---
+
+                function abrirModalCrear() {
+                    asignacionForm.reset();
+                    asignacionIdInput.value = '';
+                    modalTitle.textContent = 'Crear Nueva Asignación';
+                    modalErrorMessage.style.display = 'none';
+                    selectVehiculo.value = "";
+                    selectGarage.value = "";
+                    asignacionModal.classList.add('is-active');
+                }
+
+                async function abrirModalEditar(id) {
+                    try {
+                        const response = await fetch(`${API_URL}/${id}`);
+                        if (!response.ok)
+                            throw new Error('No se pudo cargar la asignación.');
+                        const a = await response.json();
+
+                        asignacionIdInput.value = a.idAsignacion;
+                        document.getElementById('fechaAsignacion').value = a.fechaAsignacion;
+                        selectVehiculo.value = a.vehiculo.idVehiculo;
+                        selectGarage.value = a.garage.idGarage;
+
+                        modalTitle.textContent = 'Editar Asignación';
+                        modalErrorMessage.style.display = 'none';
+                        asignacionModal.classList.add('is-active');
+
+                    } catch (error) {
+                        console.error('Error en abrirModalEditar:', error);
+                        showNotification(error.message, true);
+                    }
+                }
+
+                function cerrarModal() {
+                    asignacionModal.classList.remove('is-active');
+                }
+
+                async function guardarAsignacion(event) {
+                    event.preventDefault();
+                    const id = asignacionIdInput.value;
+                    const esNuevo = id === '';
+                    const method = esNuevo ? 'POST' : 'PUT';
+                    const url = esNuevo ? API_URL : `${API_URL}/${id}`;
+
+                    btnGuardar.classList.add('is-loading');
+                    modalErrorMessage.style.display = 'none';
+
+                    const asignacionDTO = {
+                        idVehiculo: parseInt(selectVehiculo.value),
+                        idGarage: parseInt(selectGarage.value),
+                        fechaAsignacion: document.getElementById('fechaAsignacion').value
+                    };
+
+                    if (!asignacionDTO.idVehiculo || !asignacionDTO.idGarage) {
+                        modalErrorMessage.textContent = "Debe seleccionar un vehículo y un garage.";
+                        modalErrorMessage.style.display = 'block';
+                        btnGuardar.classList.remove('is-loading');
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(url, {
+                            method: method,
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(asignacionDTO)
+                        });
+                        if (!response.ok) {
+                            const errorMsg = await response.text();
+                            throw new Error(errorMsg || 'Error al guardar la asignación.');
+                        }
+                        cerrarModal();
+                        await cargarAsignaciones();
+                        showNotification(`Asignación ${esNuevo ? 'creada' : 'actualizada'} exitosamente.`, false);
+                    } catch (error) {
+                        console.error('Error en guardarAsignacion:', error);
+                        modalErrorMessage.textContent = error.message;
+                        modalErrorMessage.style.display = 'block';
+                    } finally {
+                        btnGuardar.classList.remove('is-loading');
+                    }
+                }
+
+                function abrirModalEliminar(id, nombre) {
+                    asignacionIdParaEliminarInput.value = id;
+                    deleteAsignacionNameText.textContent = `Nº ${nombre}`;
+                    deleteModal.classList.add('is-active');
+                }
+
+                function cerrarModalEliminar() {
+                    deleteModal.classList.remove('is-active');
+                }
+
+                async function confirmarEliminacion() {
+                    const id = asignacionIdParaEliminarInput.value;
+                    btnConfirmarEliminar.classList.add('is-loading');
+                    try {
+                        const response = await fetch(`${API_URL}/${id}`, {method: 'DELETE'});
+                        if (!response.ok) {
+                            const errorMsg = await response.text();
+                            throw new Error(errorMsg || 'Error al eliminar.');
+                        }
+                        cerrarModalEliminar();
+                        await cargarAsignaciones();
+                        showNotification('Asignación eliminada exitosamente.', false);
+                    } catch (error) {
+                        console.error('Error en confirmarEliminacion:', error);
+                        showNotification(error.message, true);
+                    } finally {
+                        btnConfirmarEliminar.classList.remove('is-loading');
+                    }
+                }
+
+                // --- Event Listeners Globales ---
+                document.addEventListener('DOMContentLoaded', () => {
+                    cargarAsignaciones();
+                    cargarDropdowns();
+                });
+
+                document.getElementById('btnNuevaAsignacion').addEventListener('click', abrirModalCrear);
+                btnGuardar.addEventListener('click', guardarAsignacion);
+                btnConfirmarEliminar.addEventListener('click', confirmarEliminacion);
+
+                (document.querySelectorAll('.modal-background, .modal .delete, #btnCancelar, #btnCancelarEliminar') || []).forEach(($close) => {
+                    const $target = $close.closest('.modal');
+                    $close.addEventListener('click', () => $target.classList.remove('is-active'));
+                });
+
+                (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+                    const $notification = $delete.parentNode;
+                    $delete.addEventListener('click', () => $notification.style.display = 'none');
+                });
+
+                /*]]>*/
+            </script>
+        </section>
+    </body>
+</html>

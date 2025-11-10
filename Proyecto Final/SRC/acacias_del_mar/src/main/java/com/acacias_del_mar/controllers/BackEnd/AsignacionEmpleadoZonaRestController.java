@@ -1,6 +1,7 @@
 package com.acacias_del_mar.controllers.BackEnd;
 
 import com.acacias_del_mar.DTOs.AsignacionEmpleadoZonaDTO;
+import com.acacias_del_mar.DTOs.AsignacionEmpleadoZonaResponseDTO;
 import com.acacias_del_mar.services.AsignacionZonaEmpleado.AsignacionEmpleadoZonaService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,13 +21,13 @@ public class AsignacionEmpleadoZonaRestController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO')")
-    public ResponseEntity<List<AsignacionEmpleadoZonaDTO>> obtenerTodas() {
+    public ResponseEntity<List<AsignacionEmpleadoZonaResponseDTO>> obtenerTodas() {
         return ResponseEntity.ok(service.obtenerTodas());
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO')")
-    public ResponseEntity<AsignacionEmpleadoZonaDTO> obtenerPorId(@PathVariable Integer id) {
+    public ResponseEntity<AsignacionEmpleadoZonaResponseDTO> obtenerPorId(@PathVariable Integer id) {
         return service.obtenerPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -36,7 +37,7 @@ public class AsignacionEmpleadoZonaRestController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> crearAsignacion(@Valid @RequestBody AsignacionEmpleadoZonaDTO dto) {
         try {
-            AsignacionEmpleadoZonaDTO asignacionCreada = service.crearAsignacion(dto);
+            AsignacionEmpleadoZonaResponseDTO asignacionCreada = service.crearAsignacion(dto);
             return new ResponseEntity<>(asignacionCreada, HttpStatus.CREATED);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -47,7 +48,7 @@ public class AsignacionEmpleadoZonaRestController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> actualizarAsignacion(@PathVariable Integer id, @Valid @RequestBody AsignacionEmpleadoZonaDTO dto) {
         try {
-            AsignacionEmpleadoZonaDTO asignacionActualizada = service.actualizarAsignacion(id, dto);
+            AsignacionEmpleadoZonaResponseDTO asignacionActualizada = service.actualizarAsignacion(id, dto);
             return ResponseEntity.ok(asignacionActualizada);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);

@@ -2,6 +2,7 @@ package com.acacias_del_mar.services.Garage;
 
 import com.acacias_del_mar.DTOs.EntityMapper;
 import com.acacias_del_mar.DTOs.GarageDTO;
+import com.acacias_del_mar.DTOs.GarageResponseDTO;
 import com.acacias_del_mar.entities.Garage;
 import com.acacias_del_mar.entities.Zona;
 import com.acacias_del_mar.repositories.GarageRepository;
@@ -24,7 +25,7 @@ public class GarageServiceImpl implements GarageService{
 
     @Override
     @Transactional(readOnly = true)
-    public List<GarageDTO> obtenerTodos() {
+    public List<GarageResponseDTO> obtenerTodos() {
         return garageRepository.findAll().stream()
                 .map(mapper::toResponseDTO)
                 .collect(Collectors.toList());
@@ -32,14 +33,14 @@ public class GarageServiceImpl implements GarageService{
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<GarageDTO> obtenerPorId(Integer id) {
+    public Optional<GarageResponseDTO> obtenerPorId(Integer id) {
         return garageRepository.findById(id)
                 .map(mapper::toResponseDTO);
     }
 
     @Override
     @Transactional
-    public GarageDTO crearGarage(GarageDTO garageDTO) {
+    public GarageResponseDTO crearGarage(GarageDTO garageDTO) {
         if (garageRepository.existsByNumero(garageDTO.getNumero())) {
             throw new RuntimeException("Error: El número de garage ya existe.");
         }
@@ -55,7 +56,7 @@ public class GarageServiceImpl implements GarageService{
 
     @Override
     @Transactional
-    public GarageDTO actualizarGarage(Integer id, GarageDTO garageDTO) {
+    public GarageResponseDTO actualizarGarage(Integer id, GarageDTO garageDTO) {
         Garage garageExistente = garageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Garage no encontrado..."));
         

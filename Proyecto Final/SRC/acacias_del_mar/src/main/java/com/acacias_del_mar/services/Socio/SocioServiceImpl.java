@@ -6,6 +6,7 @@ package com.acacias_del_mar.services.Socio;
 
 import com.acacias_del_mar.DTOs.EntityMapper;
 import com.acacias_del_mar.DTOs.SocioDTO;
+import com.acacias_del_mar.DTOs.SocioResponseDTO;
 import com.acacias_del_mar.entities.Socio;
 import com.acacias_del_mar.repositories.SocioRepository;
 import java.util.List;
@@ -27,7 +28,7 @@ public class SocioServiceImpl implements SocioService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<SocioDTO> obtenerTodosLosSocios() {
+    public List<SocioResponseDTO> obtenerTodosLosSocios() {
         return socioRepository.findAll().stream()
                 .map(mapper::toResponseDTO)
                 .collect(Collectors.toList());
@@ -35,14 +36,14 @@ public class SocioServiceImpl implements SocioService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<SocioDTO> obtenerSocioPorId(Integer id) {
+    public Optional<SocioResponseDTO> obtenerSocioPorId(Integer id) {
         return socioRepository.findById(id)
                 .map(mapper::toResponseDTO);
     }
 
     @Override
     @Transactional
-    public SocioDTO crearSocio(SocioDTO socioDTO) {
+    public SocioResponseDTO crearSocio(SocioDTO socioDTO) {
         if(socioRepository.existsByNombreAndApellido(socioDTO.getNombre(), socioDTO.getApellido()))
         {
             throw new RuntimeException("Error: ese socio ya existe");
@@ -56,7 +57,7 @@ public class SocioServiceImpl implements SocioService {
 
     @Override
     @Transactional
-    public SocioDTO actualizarSocio(Integer id, SocioDTO socioDTO) {
+    public SocioResponseDTO actualizarSocio(Integer id, SocioDTO socioDTO) {
         Socio socioDb = socioRepository.findById(id)
                 .orElseThrow(()-> new RuntimeException("Error: Socio no encontrado"));
         

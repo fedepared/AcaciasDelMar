@@ -1,6 +1,7 @@
 package com.acacias_del_mar.controllers.BackEnd;
 
 import com.acacias_del_mar.DTOs.SocioDTO;
+import com.acacias_del_mar.DTOs.SocioResponseDTO;
 import com.acacias_del_mar.entities.Socio;
 import com.acacias_del_mar.services.Socio.SocioService;
 import jakarta.validation.Valid;
@@ -14,19 +15,24 @@ import java.util.List;
 
 @RestController
 @RequestMapping("api/socios")
-@PreAuthorize("hasRole('ADMINISTRADOR')")
+
 
 public class SocioRestController {
     @Autowired
     private SocioService socioService;
     
+    
+    
     @GetMapping
-    public ResponseEntity<List<SocioDTO>> obtenerTodos(){
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','SOCIO')")
+    public ResponseEntity<List<SocioResponseDTO>> obtenerTodos(){
         return ResponseEntity.ok(socioService.obtenerTodosLosSocios());
     }
     
+    
     @GetMapping("/{id}")
-    public ResponseEntity<SocioDTO> obtenerPorId(@PathVariable Integer id)
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','SOCIO')")
+    public ResponseEntity<SocioResponseDTO> obtenerPorId(@PathVariable Integer id)
     {
         return socioService.obtenerSocioPorId(id)
                 .map(socio -> ResponseEntity.ok(socio))
@@ -34,10 +40,11 @@ public class SocioRestController {
     }
     
     @PostMapping
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> crearSocio(@Valid @RequestBody SocioDTO socioDTO)
     {
         try{
-            SocioDTO socioCreado = socioService.crearSocio(socioDTO);
+            SocioResponseDTO socioCreado = socioService.crearSocio(socioDTO);
             return new ResponseEntity<>(socioCreado, HttpStatus.CREATED);
         }catch(RuntimeException e)
         {
@@ -46,10 +53,11 @@ public class SocioRestController {
     }
     
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> actualizarSocio(@PathVariable Integer id, @Valid @RequestBody SocioDTO socioDTO)
     {
         try{
-            SocioDTO socioActualizado = socioService.actualizarSocio(id, socioDTO);
+            SocioResponseDTO socioActualizado = socioService.actualizarSocio(id, socioDTO);
             return ResponseEntity.ok(socioActualizado);
         }catch(RuntimeException e)
         {
@@ -58,6 +66,7 @@ public class SocioRestController {
     }
     
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> eliminarSocio(@PathVariable Integer id)
     {
         try{

@@ -1,17 +1,19 @@
 package com.acacias_del_mar.services.Vehiculo;
 
 import com.acacias_del_mar.DTOs.VehiculoDTO;
+import com.acacias_del_mar.DTOs.VehiculoResponseDTO;
 import java.util.List;
 import java.util.Optional;
 
+
 public interface VehiculoService {
-    List<VehiculoDTO> obtenerTodos();
+    List<VehiculoResponseDTO> obtenerTodos();
 
-    Optional<VehiculoDTO> obtenerPorId(Integer id);
+    Optional<VehiculoResponseDTO> obtenerPorId(Integer id);
 
-    VehiculoDTO crearVehiculo(VehiculoDTO vehiculoDTO);
+    VehiculoResponseDTO crearVehiculo(VehiculoDTO vehiculoDTO);
 
-    VehiculoDTO actualizarVehiculo(Integer id, VehiculoDTO vehiculoDTO);
+    VehiculoResponseDTO actualizarVehiculo(Integer id, VehiculoDTO vehiculoDTO);
 
     void eliminarVehiculo(Integer id);
 }

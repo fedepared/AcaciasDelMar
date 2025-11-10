@@ -1,6 +1,7 @@
 package com.acacias_del_mar.controllers.BackEnd;
 
 import com.acacias_del_mar.DTOs.GarageDTO;
+import com.acacias_del_mar.DTOs.GarageResponseDTO;
 import com.acacias_del_mar.entities.Garage;
 import com.acacias_del_mar.services.Garage.GarageService;
 import jakarta.validation.Valid;
@@ -14,28 +15,30 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/garages")
-@PreAuthorize("hasRole('ADMINISTRADOR')")
 public class GarageRestController {
 
     @Autowired
     private GarageService garageService;
 
     @GetMapping
-    public ResponseEntity<List<GarageDTO>> obtenerTodos() {
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','SOCIO')")
+    public ResponseEntity<List<GarageResponseDTO>> obtenerTodos() {
         return ResponseEntity.ok(garageService.obtenerTodos());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<GarageDTO> obtenerPorId(@PathVariable Integer id) {
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','SOCIO')")
+    public ResponseEntity<GarageResponseDTO> obtenerPorId(@PathVariable Integer id) {
         return garageService.obtenerPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> crearGarage(@Valid @RequestBody GarageDTO garageDTO) {
         try {
-            GarageDTO garageCreado = garageService.crearGarage(garageDTO);
+            GarageResponseDTO garageCreado = garageService.crearGarage(garageDTO);
             return new ResponseEntity<>(garageCreado, HttpStatus.CREATED);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -43,9 +46,10 @@ public class GarageRestController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> actualizarGarage(@PathVariable Integer id, @Valid @RequestBody GarageDTO garageDTO) {
         try {
-            GarageDTO garageActualizado = garageService.actualizarGarage(id, garageDTO);
+            GarageResponseDTO garageActualizado = garageService.actualizarGarage(id, garageDTO);
             return ResponseEntity.ok(garageActualizado);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
@@ -53,6 +57,7 @@ public class GarageRestController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> eliminarGarage(@PathVariable Integer id) {
         try {
             garageService.eliminarGarage(id);

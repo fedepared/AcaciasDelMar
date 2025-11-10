@@ -1,19 +1,20 @@
 package com.acacias_del_mar.services.Zona;
 
 import com.acacias_del_mar.DTOs.ZonaDTO;
+import com.acacias_del_mar.DTOs.ZonaResponseDTO;
 import com.acacias_del_mar.entities.Zona;
 import java.util.List;
 import java.util.Optional;
 
 
 public interface ZonaService{
-    List<Zona> obtenerZonas();
+    List<ZonaResponseDTO> obtenerTodas();
     
-    Zona crearZona(ZonaDTO zonaDTO);
+    Optional<ZonaResponseDTO> obtenerPorId(Integer id);
     
-    Optional<Zona> obtenerPorId(Integer id);
+    ZonaResponseDTO crearZona(ZonaDTO zonaDTO);
     
-    Zona actualizarZona(Integer id, ZonaDTO zonaDTO);
+    ZonaResponseDTO actualizarZona(Integer id, ZonaDTO zonaDTO);
     
     void eliminarZona(Integer id);
 }

@@ -1,0 +1,357 @@
+<!-- 1. Heredamos de la plantilla 'layout' -->
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+
+    <head>
+        <title th:fragment="title">Gestión Asignaciones (E-Z)</title>
+    </head>
+
+    <body>
+        <section class="section" th:fragment="content">
+
+            <div class="is-flex is-justify-content-space-between is-align-items-center">
+                <h1 class="title is-2">Gestión de Asignaciones (Empleado-Zona)</h1>
+                <button class="button is-primary" id="btnNuevaAsignacion">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Asignar Empleado</span>
+                </button>
+            </div>
+            <p class="subtitle is-5">Asigna empleados a zonas de trabajo.</p>
+
+            <!-- Notificación General -->
+            <div id="notification" class="notification" style="display: none;">
+                <button class="delete"></button>
+                <span id="notificationMessage"></span>
+            </div>
+
+            <!-- Tabla de Asignaciones E-Z -->
+            <div class="table-container mt-4">
+                <table class="table is-fullwidth is-striped is-hoverable">
+                    <thead>
+                        <tr>
+                            <th>ID Asignación</th>
+                            <th>Empleado</th>
+                            <th>Zona Asignada</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="asignacionesEzTableBody">
+                        <tr>
+                            <td colspan="4" class="has-text-centered">
+                                <span class="icon is-large"><i class="fas fa-spinner fa-spin fa-2x"></i></span>
+                                <p>Cargando asignaciones...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- =======================
+                 Modal CREAR/EDITAR
+            ======================== -->
+            <div class="modal" id="asignacionEzModal">
+                <div class="modal-background"></div>
+                <div class="modal-card">
+                    <header class="modal-card-head">
+                        <p class="modal-card-title" id="modalTitle">Crear Asignación</p>
+                        <button class="delete" aria-label="close"></button>
+                    </header>
+                    <section class="modal-card-body">
+                        <form id="asignacionEzForm">
+                            <input type="hidden" id="asignacionId">
+
+                            <!-- Dropdown para Empleado -->
+                            <div class="field">
+                                <label class="label" for="idEmpleado">Empleado</label>
+                                <div class="control">
+                                    <div class="select is-fullwidth">
+                                        <select id="idEmpleado" required>
+                                            <option value="">Cargando empleados...</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dropdown para Zona -->
+                            <div class="field">
+                                <label class="label" for="idZona">Zona</label>
+                                <div class="control">
+                                    <div class="select is-fullwidth">
+                                        <select id="idZona" required>
+                                            <option value="">Cargando zonas...</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </form>
+                        <div id="modalErrorMessage" class="notification is-danger is-light mt-3" style="display: none;"></div>
+                    </section>
+                    <footer class="modal-card-foot is-justify-content-flex-end">
+                        <button class="button is-success" id="btnGuardar">Guardar Cambios</button>
+                        <button class="button" id="btnCancelar">Cancelar</button>
+                    </footer>
+                </div>
+            </div>
+
+            <!-- Modal CONFIRMACIÓN (ELIMINAR) -->
+            <div class="modal" id="deleteModal">
+                <div class="modal-background"></div>
+                <div class="modal-card">
+                    <header class="modal-card-head has-background-danger">
+                        <p class="modal-card-title has-text-white">Confirmar Eliminación</p>
+                        <button class="delete" aria-label="close"></button>
+                    </header>
+                    <section class="modal-card-body">
+                        <p>¿Estás seguro de que deseas eliminar la asignación <strong id="deleteAsignacionNameText"></strong>?</p>
+                        <p><strong>Esta acción no se puede deshacer.</strong></p>
+                        <input type="hidden" id="asignacionIdParaEliminar">
+                    </section>
+                    <footer class="modal-card-foot is-justify-content-flex-end">
+                        <button class="button is-danger" id="btnConfirmarEliminar">Eliminar</button>
+                        <button class="button" id="btnCancelarEliminar">Cancelar</button>
+                    </footer>
+                </div>
+            </div>
+
+            <!-- =======================
+                 JAVASCRIPT
+            ======================== -->
+            <script th:inline="javascript">
+                /*<![CDATA[*/
+
+                const API_URL = /*[[@{/api/asignaciones-empleado-zona}]]*/ '/api/asignaciones-empleado-zona';
+                const API_EMPLEADOS = /*[[@{/api/empleados}]]*/ '/api/empleados';
+                const API_ZONAS = /*[[@{/api/zonas}]]*/ '/api/zonas';
+
+                // --- DOM Elements ---
+                const tableBody = document.getElementById('asignacionesEzTableBody');
+                const asignacionModal = document.getElementById('asignacionEzModal');
+                const modalTitle = document.getElementById('modalTitle');
+                const asignacionForm = document.getElementById('asignacionEzForm');
+                const asignacionIdInput = document.getElementById('asignacionId');
+                const modalErrorMessage = document.getElementById('modalErrorMessage');
+                const btnGuardar = document.getElementById('btnGuardar');
+                const deleteModal = document.getElementById('deleteModal');
+                const asignacionIdParaEliminarInput = document.getElementById('asignacionIdParaEliminar');
+                const deleteAsignacionNameText = document.getElementById('deleteAsignacionNameText');
+                const btnConfirmarEliminar = document.getElementById('btnConfirmarEliminar');
+                const notification = document.getElementById('notification');
+                const notificationMessage = document.getElementById('notificationMessage');
+                const selectEmpleado = document.getElementById('idEmpleado');
+                const selectZona = document.getElementById('idZona');
+
+                // --- Funciones de UI ---
+                function showNotification(message, isError = false) {
+                    notificationMessage.textContent = message;
+                    notification.className = 'notification';
+                    notification.classList.add(isError ? 'is-danger' : 'is-success', 'is-light');
+                    notification.style.display = 'block';
+                    setTimeout(() => notification.style.display = 'none', 3000);
+                }
+
+                /**
+                 * Carga los dropdowns del formulario
+                 */
+                async function cargarDropdowns() {
+                    try {
+                        // Cargar Empleados
+                        const empleadosResponse = await fetch(API_EMPLEADOS);
+                        if (!empleadosResponse.ok)
+                            throw new Error('No se pudieron cargar los empleados');
+                        const empleados = await empleadosResponse.json();
+                        selectEmpleado.innerHTML = '<option value="">Seleccione un empleado</option>';
+                        empleados.forEach(e => {
+                            selectEmpleado.innerHTML += `<option value="${e.idEmpleado}">${e.nombre} ${e.apellido}</option>`;
+                        });
+
+                        // Cargar Zonas
+                        const zonasResponse = await fetch(API_ZONAS);
+                        if (!zonasResponse.ok)
+                            throw new Error('No se pudieron cargar las zonas');
+                        const zonas = await zonasResponse.json();
+                        selectZona.innerHTML = '<option value="">Seleccione una zona</option>';
+                        zonas.forEach(z => {
+                            selectZona.innerHTML += `<option value="${z.idZona}">Zona ${z.letra} (${z.tipoVehiculo.denominacion})</option>`;
+                        });
+
+                    } catch (error) {
+                        console.error('Error cargando dropdowns:', error);
+                        showNotification(error.message, true);
+                    }
+                }
+
+                /**
+                 * Carga todas las asignaciones E-Z desde la API
+                 */
+                async function cargarAsignaciones() {
+                    try {
+                        const response = await fetch(API_URL);
+                        if (!response.ok)
+                            throw new Error(`Error ${response.status}: ${await response.text()}`);
+                        const asignaciones = await response.json();
+
+                        if (asignaciones.length === 0) {
+                            tableBody.innerHTML = '<tr><td colspan="4" class="has-text-centered">No se encontraron asignaciones.</td></tr>';
+                            return;
+                        }
+
+                        tableBody.innerHTML = asignaciones.map(a => `
+                            <tr>
+                                <td>${a.idAsignacionEmpleadoZona}</td>
+                                <td>${a.empleado.nombre} ${a.empleado.apellido}</td>
+                                <td>Zona ${a.zona.letra}</td>
+                                <td>
+                                    <button class="button is-small is-info" onclick="abrirModalEditar(${a.idAsignacionEmpleadoZona})">
+                                        <span class="icon"><i class="fas fa-edit"></i></span>
+                                    </button>
+                                    <button class="button is-small is-danger" onclick="abrirModalEliminar(${a.idAsignacionEmpleadoZona}, ${a.idAsignacionEmpleadoZona})">
+                                        <span class="icon"><i class="fas fa-trash"></i></span>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('');
+
+                    } catch (error) {
+                        console.error('Error en cargarAsignaciones:', error);
+                        tableBody.innerHTML = `<tr><td colspan="4" class="has-text-centered has-text-danger">${error.message}</td></tr>`;
+                        showNotification(error.message, true);
+                    }
+                }
+
+                // --- Funciones de Modales ---
+
+                function abrirModalCrear() {
+                    asignacionForm.reset();
+                    asignacionIdInput.value = '';
+                    modalTitle.textContent = 'Crear Nueva Asignación E-Z';
+                    modalErrorMessage.style.display = 'none';
+                    selectEmpleado.value = "";
+                    selectZona.value = "";
+                    asignacionModal.classList.add('is-active');
+                }
+
+                async function abrirModalEditar(id) {
+                    try {
+                        const response = await fetch(`${API_URL}/${id}`);
+                        if (!response.ok)
+                            throw new Error('No se pudo cargar la asignación.');
+                        const a = await response.json();
+
+                        asignacionIdInput.value = a.idAsignacionEmpleadoZona;
+                        selectEmpleado.value = a.empleado.idEmpleado;
+                        selectZona.value = a.zona.idZona;
+
+                        modalTitle.textContent = 'Editar Asignación E-Z';
+                        modalErrorMessage.style.display = 'none';
+                        asignacionModal.classList.add('is-active');
+
+                    } catch (error) {
+                        console.error('Error en abrirModalEditar:', error);
+                        showNotification(error.message, true);
+                    }
+                }
+
+                function cerrarModal() {
+                    asignacionModal.classList.remove('is-active');
+                }
+
+                async function guardarAsignacion(event) {
+                    event.preventDefault();
+                    const id = asignacionIdInput.value;
+                    const esNuevo = id === '';
+                    const method = esNuevo ? 'POST' : 'PUT';
+                    const url = esNuevo ? API_URL : `${API_URL}/${id}`;
+
+                    btnGuardar.classList.add('is-loading');
+                    modalErrorMessage.style.display = 'none';
+
+                    const asignacionDTO = {
+                        idEmpleado: parseInt(selectEmpleado.value),
+                        idZona: parseInt(selectZona.value)
+                    };
+
+                    if (!asignacionDTO.idEmpleado || !asignacionDTO.idZona) {
+                        modalErrorMessage.textContent = "Debe seleccionar un empleado y una zona.";
+                        modalErrorMessage.style.display = 'block';
+                        btnGuardar.classList.remove('is-loading');
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(url, {
+                            method: method,
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(asignacionDTO)
+                        });
+                        if (!response.ok) {
+                            const errorMsg = await response.text();
+                            throw new Error(errorMsg || 'Error al guardar la asignación.');
+                        }
+                        cerrarModal();
+                        await cargarAsignaciones();
+                        showNotification(`Asignación ${esNuevo ? 'creada' : 'actualizada'} exitosamente.`, false);
+                    } catch (error) {
+                        console.error('Error en guardarAsignacion:', error);
+                        modalErrorMessage.textContent = error.message;
+                        modalErrorMessage.style.display = 'block';
+                    } finally {
+                        btnGuardar.classList.remove('is-loading');
+                    }
+                }
+
+                function abrirModalEliminar(id, nombre) {
+                    asignacionIdParaEliminarInput.value = id;
+                    deleteAsignacionNameText.textContent = `Nº ${nombre}`;
+                    deleteModal.classList.add('is-active');
+                }
+
+                function cerrarModalEliminar() {
+                    deleteModal.classList.remove('is-active');
+                }
+
+                async function confirmarEliminacion() {
+                    const id = asignacionIdParaEliminarInput.value;
+                    btnConfirmarEliminar.classList.add('is-loading');
+                    try {
+                        const response = await fetch(`${API_URL}/${id}`, {method: 'DELETE'});
+                        if (!response.ok) {
+                            const errorMsg = await response.text();
+                            throw new Error(errorMsg || 'Error al eliminar.');
+                        }
+                        cerrarModalEliminar();
+                        await cargarAsignaciones();
+                        showNotification('Asignación eliminada exitosamente.', false);
+                    } catch (error) {
+                        console.error('Error en confirmarEliminacion:', error);
+                        showNotification(error.message, true);
+                    } finally {
+                        btnConfirmarEliminar.classList.remove('is-loading');
+                    }
+                }
+
+                // --- Event Listeners Globales ---
+                document.addEventListener('DOMContentLoaded', () => {
+                    cargarAsignaciones();
+                    cargarDropdowns();
+                });
+
+                document.getElementById('btnNuevaAsignacion').addEventListener('click', abrirModalCrear);
+                btnGuardar.addEventListener('click', guardarAsignacion);
+                btnConfirmarEliminar.addEventListener('click', confirmarEliminacion);
+
+                (document.querySelectorAll('.modal-background, .modal .delete, #btnCancelar, #btnCancelarEliminar') || []).forEach(($close) => {
+                    const $target = $close.closest('.modal');
+                    $close.addEventListener('click', () => $target.classList.remove('is-active'));
+                });
+
+                (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+                    const $notification = $delete.parentNode;
+                    $delete.addEventListener('click', () => $notification.style.display = 'none');
+                });
+
+                /*]]>*/
+            </script>
+        </section>
+    </body>
+</html>

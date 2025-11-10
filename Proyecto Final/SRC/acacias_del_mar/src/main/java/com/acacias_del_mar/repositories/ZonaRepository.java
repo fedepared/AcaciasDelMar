@@ -6,6 +6,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ZonaRepository extends JpaRepository<Zona,Integer> {
-//    Optional<List<Zona>> getByIdTipoVehiculo(int idTipoVehiculo);
+
     boolean existsByLetra(char letra);
 }

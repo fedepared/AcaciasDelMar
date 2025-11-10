@@ -1,0 +1,350 @@
+<!-- 1. Heredamos de la plantilla 'layout' -->
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+
+    <head>
+        <title th:fragment="title">Gestión de Empleados</title>
+    </head>
+
+    <body>
+        <section class="section" th:fragment="content">
+
+            <div class="is-flex is-justify-content-space-between is-align-items-center">
+                <h1 class="title is-2">Gestión de Empleados</h1>
+                <button class="button is-primary" id="btnNuevoEmpleado">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Crear Empleado</span>
+                </button>
+            </div>
+            <p class="subtitle is-5">Administra el personal del camping.</p>
+
+            <!-- Notificación General -->
+            <div id="notification" class="notification" style="display: none;">
+                <button class="delete"></button>
+                <span id="notificationMessage"></span>
+            </div>
+
+            <!-- Tabla de Empleados -->
+            <div class="table-container mt-4">
+                <table class="table is-fullwidth is-striped is-hoverable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Teléfono</th>
+                            <th>Especialidad</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="empleadosTableBody">
+                        <tr>
+                            <td colspan="7" class="has-text-centered">
+                                <span class="icon is-large"><i class="fas fa-spinner fa-spin fa-2x"></i></span>
+                                <p>Cargando empleados...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- =======================
+                 Modal CREAR/EDITAR
+            ======================== -->
+            <div class="modal" id="empleadoModal">
+                <div class="modal-background"></div>
+                <div class="modal-card">
+                    <header class="modal-card-head">
+                        <p class="modal-card-title" id="modalTitle">Crear Empleado</p>
+                        <button class="delete" aria-label="close"></button>
+                    </header>
+                    <section class="modal-card-body">
+                        <form id="empleadoForm">
+                            <input type="hidden" id="empleadoId">
+
+                            <div class="columns">
+                                <div class="column">
+                                    <div class="field">
+                                        <label class="label" for="nombre">Nombre</label>
+                                        <div class="control">
+                                            <input class="input" type="text" id="nombre" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="column">
+                                    <div class="field">
+                                        <label class="label" for="apellido">Apellido</label>
+                                        <div class="control">
+                                            <input class="input" type="text" id="apellido" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="columns">
+                                <div class="column">
+                                    <div class="field">
+                                        <label class="label" for="codigo">Código</label>
+                                        <div class="control">
+                                            <input class="input" type="number" id="codigo" placeholder="Opcional">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="column">
+                                    <div class="field">
+                                        <label class="label" for="telefono">Teléfono</label>
+                                        <div class="control">
+                                            <input class="input" type="tel" id="telefono">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <label class="label" for="direccion">Dirección</label>
+                                <div class="control">
+                                    <input class="input" type="text" id="direccion">
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <label class="label" for="especialidad">Especialidad</label>
+                                <div class="control">
+                                    <input class="input" type="text" id="especialidad">
+                                </div>
+                            </div>
+
+                        </form>
+                        <div id="modalErrorMessage" class="notification is-danger is-light mt-3" style="display: none;"></div>
+                    </section>
+                    <footer class="modal-card-foot is-justify-content-flex-end">
+                        <button class="button is-success" id="btnGuardar">Guardar Cambios</button>
+                        <button class="button" id="btnCancelar">Cancelar</button>
+                    </footer>
+                </div>
+            </div>
+
+            <!-- Modal CONFIRMACIÓN (ELIMINAR) -->
+            <div class="modal" id="deleteModal">
+                <div class="modal-background"></div>
+                <div class="modal-card">
+                    <header class="modal-card-head has-background-danger">
+                        <p class="modal-card-title has-text-white">Confirmar Eliminación</p>
+                        <button class="delete" aria-label="close"></button>
+                    </header>
+                    <section class="modal-card-body">
+                        <p>¿Estás seguro de que deseas eliminar a <strong id="deleteEmpleadoNameText">este empleado</strong>?</p>
+                        <p><strong>Esta acción no se puede deshacer.</strong></p>
+                        <input type="hidden" id="empleadoIdParaEliminar">
+                    </section>
+                    <footer class="modal-card-foot is-justify-content-flex-end">
+                        <button class="button is-danger" id="btnConfirmarEliminar">Eliminar</button>
+                        <button class="button" id="btnCancelarEliminar">Cancelar</button>
+                    </footer>
+                </div>
+            </div>
+
+            <!-- =======================
+                 JAVASCRIPT
+            ======================== -->
+            <script th:inline="javascript">
+                /*<![CDATA[*/
+
+                const API_URL = /*[[@{/api/empleados}]]*/ '/api/empleados';
+
+                // --- DOM Elements ---
+                const tableBody = document.getElementById('empleadosTableBody');
+                const empleadoModal = document.getElementById('empleadoModal');
+                const modalTitle = document.getElementById('modalTitle');
+                const empleadoForm = document.getElementById('empleadoForm');
+                const empleadoIdInput = document.getElementById('empleadoId');
+                const modalErrorMessage = document.getElementById('modalErrorMessage');
+                const btnGuardar = document.getElementById('btnGuardar');
+                const deleteModal = document.getElementById('deleteModal');
+                const empleadoIdParaEliminarInput = document.getElementById('empleadoIdParaEliminar');
+                const deleteEmpleadoNameText = document.getElementById('deleteEmpleadoNameText');
+                const btnConfirmarEliminar = document.getElementById('btnConfirmarEliminar');
+                const notification = document.getElementById('notification');
+                const notificationMessage = document.getElementById('notificationMessage');
+
+                // --- Funciones de UI ---
+                function showNotification(message, isError = false) {
+                    notificationMessage.textContent = message;
+                    notification.className = 'notification';
+                    notification.classList.add(isError ? 'is-danger' : 'is-success', 'is-light');
+                    notification.style.display = 'block';
+                    setTimeout(() => notification.style.display = 'none', 3000);
+                }
+
+                /**
+                 * Carga todos los empleados desde la API
+                 */
+                async function cargarEmpleados() {
+                    try {
+                        const response = await fetch(API_URL);
+                        if (!response.ok)
+                            throw new Error(`Error ${response.status}: ${await response.text()}`);
+                        const empleados = await response.json();
+
+                        if (empleados.length === 0) {
+                            tableBody.innerHTML = '<tr><td colspan="7" class="has-text-centered">No se encontraron empleados.</td></tr>';
+                            return;
+                        }
+
+                        tableBody.innerHTML = empleados.map(e => `
+                            <tr>
+                                <td>${e.idEmpleado}</td>
+                                <td>${e.codigo || 'N/A'}</td>
+                                <td>${e.nombre}</td>
+                                <td>${e.apellido}</td>
+                                <td>${e.telefono || 'N/A'}</td>
+                                <td>${e.especialidad || 'N/A'}</td>
+                                <td>
+                                    <button class="button is-small is-info" onclick="abrirModalEditar(${e.idEmpleado})">
+                                        <span class="icon"><i class="fas fa-edit"></i></span>
+                                    </button>
+                                    <button class="button is-small is-danger" onclick="abrirModalEliminar(${e.idEmpleado}, '${e.nombre} ${e.apellido}')">
+                                        <span class="icon"><i class="fas fa-trash"></i></span>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('');
+
+                    } catch (error) {
+                        console.error('Error en cargarEmpleados:', error);
+                        tableBody.innerHTML = `<tr><td colspan="7" class="has-text-centered has-text-danger">${error.message}</td></tr>`;
+                        showNotification(error.message, true);
+                    }
+                }
+
+                // --- Funciones de Modales ---
+
+                function abrirModalCrear() {
+                    empleadoForm.reset();
+                    empleadoIdInput.value = '';
+                    modalTitle.textContent = 'Crear Nuevo Empleado';
+                    modalErrorMessage.style.display = 'none';
+                    empleadoModal.classList.add('is-active');
+                }
+
+                async function abrirModalEditar(id) {
+                    try {
+                        const response = await fetch(`${API_URL}/${id}`);
+                        if (!response.ok)
+                            throw new Error('No se pudo cargar el empleado.');
+                        const e = await response.json();
+
+                        empleadoIdInput.value = e.idEmpleado;
+                        document.getElementById('nombre').value = e.nombre;
+                        document.getElementById('apellido').value = e.apellido;
+                        document.getElementById('codigo').value = e.codigo || '';
+                        document.getElementById('telefono').value = e.telefono || '';
+                        document.getElementById('direccion').value = e.direccion || '';
+                        document.getElementById('especialidad').value = e.especialidad || '';
+
+                        modalTitle.textContent = 'Editar Empleado';
+                        modalErrorMessage.style.display = 'none';
+                        empleadoModal.classList.add('is-active');
+                    } catch (error) {
+                        console.error('Error en abrirModalEditar:', error);
+                        showNotification(error.message, true);
+                    }
+                }
+
+                function cerrarModal() {
+                    empleadoModal.classList.remove('is-active');
+                }
+
+                async function guardarEmpleado(event) {
+                    event.preventDefault();
+                    const id = empleadoIdInput.value;
+                    const esNuevo = id === '';
+                    const method = esNuevo ? 'POST' : 'PUT';
+                    const url = esNuevo ? API_URL : `${API_URL}/${id}`;
+
+                    btnGuardar.classList.add('is-loading');
+                    modalErrorMessage.style.display = 'none';
+
+                    const empleadoDTO = {
+                        nombre: document.getElementById('nombre').value,
+                        apellido: document.getElementById('apellido').value,
+                        codigo: parseInt(document.getElementById('codigo').value) || null,
+                        telefono: document.getElementById('telefono').value,
+                        direccion: document.getElementById('direccion').value,
+                        especialidad: document.getElementById('especialidad').value
+                    };
+
+                    try {
+                        const response = await fetch(url, {
+                            method: method,
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(empleadoDTO)
+                        });
+                        if (!response.ok) {
+                            const errorMsg = await response.text();
+                            throw new Error(errorMsg || 'Error al guardar el empleado.');
+                        }
+                        cerrarModal();
+                        await cargarEmpleados();
+                        showNotification(`Empleado ${esNuevo ? 'creado' : 'actualizado'} exitosamente.`, false);
+                    } catch (error) {
+                        console.error('Error en guardarEmpleado:', error);
+                        modalErrorMessage.textContent = error.message;
+                        modalErrorMessage.style.display = 'block';
+                    } finally {
+                        btnGuardar.classList.remove('is-loading');
+                    }
+                }
+
+                function abrirModalEliminar(id, nombreCompleto) {
+                    empleadoIdParaEliminarInput.value = id;
+                    deleteEmpleadoNameText.textContent = nombreCompleto;
+                    deleteModal.classList.add('is-active');
+                }
+
+                function cerrarModalEliminar() {
+                    deleteModal.classList.remove('is-active');
+                }
+
+                async function confirmarEliminacion() {
+                    const id = empleadoIdParaEliminarInput.value;
+                    btnConfirmarEliminar.classList.add('is-loading');
+                    try {
+                        const response = await fetch(`${API_URL}/${id}`, {method: 'DELETE'});
+                        if (!response.ok) {
+                            const errorMsg = await response.text();
+                            throw new Error(errorMsg || 'Error al eliminar.');
+                        }
+                        cerrarModalEliminar();
+                        await cargarEmpleados();
+                        showNotification('Empleado eliminado exitosamente.', false);
+                    } catch (error) {
+                        console.error('Error en confirmarEliminacion:', error);
+                        showNotification(error.message, true);
+                    } finally {
+                        btnConfirmarEliminar.classList.remove('is-loading');
+                    }
+                }
+
+                // --- Event Listeners Globales ---
+                document.addEventListener('DOMContentLoaded', cargarEmpleados);
+                document.getElementById('btnNuevoEmpleado').addEventListener('click', abrirModalCrear);
+                btnGuardar.addEventListener('click', guardarEmpleado);
+                btnConfirmarEliminar.addEventListener('click', confirmarEliminacion);
+
+                (document.querySelectorAll('.modal-background, .modal .delete, #btnCancelar, #btnCancelarEliminar') || []).forEach(($close) => {
+                    const $target = $close.closest('.modal');
+                    $close.addEventListener('click', () => $target.classList.remove('is-active'));
+                });
+
+                (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+                    const $notification = $delete.parentNode;
+                    $delete.addEventListener('click', () => $notification.style.display = 'none');
+                });
+
+                /*]]>*/
+            </script>
+        </section>
+    </body>
+</html>

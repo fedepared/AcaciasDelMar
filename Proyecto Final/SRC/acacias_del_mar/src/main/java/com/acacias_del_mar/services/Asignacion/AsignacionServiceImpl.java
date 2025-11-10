@@ -2,6 +2,7 @@ package com.acacias_del_mar.services.Asignacion;
 
 import com.acacias_del_mar.repositories.VehiculoRepository;
 import com.acacias_del_mar.DTOs.AsignacionDTO;
+import com.acacias_del_mar.DTOs.AsignacionResponseDTO;
 import com.acacias_del_mar.DTOs.EntityMapper;
 import com.acacias_del_mar.entities.Asignacion;
 import com.acacias_del_mar.entities.Garage;
@@ -29,7 +30,7 @@ public class AsignacionServiceImpl implements AsignacionService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<AsignacionDTO> obtenerTodas() {
+    public List<AsignacionResponseDTO> obtenerTodas() {
         return asignacionRepository.findAll().stream()
                 .map(mapper::toResponseDTO)
                 .collect(Collectors.toList());
@@ -37,7 +38,7 @@ public class AsignacionServiceImpl implements AsignacionService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<AsignacionDTO> obtenerPorId(Integer id) {
+    public Optional<AsignacionResponseDTO> obtenerPorId(Integer id) {
         return asignacionRepository.findById(id)
                 .map(mapper::toResponseDTO);
         
@@ -45,7 +46,7 @@ public class AsignacionServiceImpl implements AsignacionService {
 
     @Override
     @Transactional
-    public AsignacionDTO crearAsignacion(AsignacionDTO asignacionDTO) {
+    public AsignacionResponseDTO crearAsignacion(AsignacionDTO asignacionDTO) {
         Vehiculo vehiculo = vehiculoRepository.findById(asignacionDTO.getIdVehiculo())
                 .orElseThrow(() -> new RuntimeException("Vehículo no encontrado..."));
         Garage garage = garageRepository.findById(asignacionDTO.getIdGarage())
@@ -59,7 +60,7 @@ public class AsignacionServiceImpl implements AsignacionService {
 
     @Override
     @Transactional
-    public AsignacionDTO actualizarAsignacion(Integer id, AsignacionDTO asignacionDTO) {
+    public AsignacionResponseDTO actualizarAsignacion(Integer id, AsignacionDTO asignacionDTO) {
         Asignacion asignacionExistente = asignacionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Asignacion no encontrada"));
         

@@ -1,6 +1,7 @@
 package com.acacias_del_mar.controllers.BackEnd;
 
 import com.acacias_del_mar.DTOs.AsignacionDTO;
+import com.acacias_del_mar.DTOs.AsignacionResponseDTO;
 import com.acacias_del_mar.entities.Asignacion;
 import com.acacias_del_mar.services.Asignacion.AsignacionService;
 import jakarta.validation.Valid;
@@ -23,13 +24,13 @@ public class AsignacionesRestController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SOCIO')")
-    public ResponseEntity<List<AsignacionDTO>> obtenerTodas() {
+    public ResponseEntity<List<AsignacionResponseDTO>> obtenerTodas() {
         return ResponseEntity.ok(asignacionService.obtenerTodas());
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SOCIO')")
-    public ResponseEntity<AsignacionDTO> obtenerPorId(@PathVariable Integer id) {
+    public ResponseEntity<AsignacionResponseDTO> obtenerPorId(@PathVariable Integer id) {
         return asignacionService.obtenerPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -39,7 +40,7 @@ public class AsignacionesRestController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> crearAsignacion(@Valid @RequestBody AsignacionDTO asignacionDTO) {
         try {
-            AsignacionDTO asignacionCreada = asignacionService.crearAsignacion(asignacionDTO);
+            AsignacionResponseDTO asignacionCreada = asignacionService.crearAsignacion(asignacionDTO);
             return new ResponseEntity<>(asignacionCreada, HttpStatus.CREATED);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -50,7 +51,7 @@ public class AsignacionesRestController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> actualizarAsignacion(@PathVariable Integer id, @Valid @RequestBody AsignacionDTO asignacionDTO) {
         try {
-            AsignacionDTO asignacionActualizada = asignacionService.actualizarAsignacion(id, asignacionDTO);
+            AsignacionResponseDTO asignacionActualizada = asignacionService.actualizarAsignacion(id, asignacionDTO);
             return ResponseEntity.ok(asignacionActualizada);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);

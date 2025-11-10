@@ -2,6 +2,7 @@ package com.acacias_del_mar.services.TipoVehiculo;
 
 import com.acacias_del_mar.DTOs.EntityMapper;
 import com.acacias_del_mar.DTOs.TipoVehiculoDTO;
+import com.acacias_del_mar.DTOs.TipoVehiculoResponseDTO;
 import com.acacias_del_mar.services.TipoVehiculo.TipoVehiculoService;
 import com.acacias_del_mar.entities.TipoVehiculo;
 import com.acacias_del_mar.exception.GeneralException;
@@ -28,7 +29,7 @@ public class TipoVehiculoServiceImpl implements TipoVehiculoService{
     
    @Override
     @Transactional(readOnly = true)
-    public List<TipoVehiculoDTO> obtenerTodos() {
+    public List<TipoVehiculoResponseDTO> obtenerTodos() {
         return tipoVehiculoRepository.findAll().stream()
                 .map(mapper::toResponseDTO)
                 .collect(Collectors.toList());

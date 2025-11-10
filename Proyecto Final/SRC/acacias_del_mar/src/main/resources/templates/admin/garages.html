@@ -1,0 +1,367 @@
+<!-- 1. Heredamos de la plantilla 'layout' -->
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+
+    <head>
+        <title th:fragment="title">Gestión de Garages</title>
+    </head>
+
+    <body>
+        <section class="section" th:fragment="content">
+
+            <div class="is-flex is-justify-content-space-between is-align-items-center">
+                <h1 class="title is-2">Gestión de Garages</h1>
+                <button class="button is-primary" id="btnNuevoGarage">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Crear Garage</span>
+                </button>
+            </div>
+            <p class="subtitle is-5">Administra los garages del camping.</p>
+
+            <!-- Notificación General -->
+            <div id="notification" class="notification" style="display: none;">
+                <button class="delete"></button>
+                <span id="notificationMessage"></span>
+            </div>
+
+            <!-- Tabla de Garages -->
+            <div class="table-container mt-4">
+                <table class="table is-fullwidth is-striped is-hoverable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Número</th>
+                            <th>Zona</th>
+                            <th>Servicios</th>
+                            <th>Contador Luz</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="garagesTableBody">
+                        <tr>
+                            <td colspan="6" class="has-text-centered">
+                                <span class="icon is-large"><i class="fas fa-spinner fa-spin fa-2x"></i></span>
+                                <p>Cargando garages...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- =======================
+                 Modal CREAR/EDITAR
+            ======================== -->
+            <div class="modal" id="garageModal">
+                <div class="modal-background"></div>
+                <div class="modal-card">
+                    <header class="modal-card-head">
+                        <p class="modal-card-title" id="modalTitle">Crear Garage</p>
+                        <button class="delete" aria-label="close"></button>
+                    </header>
+                    <section class="modal-card-body">
+                        <form id="garageForm">
+                            <input type="hidden" id="garageId">
+
+                            <div class="field">
+                                <label class="label" for="numero">Número de Garage</label>
+                                <div class="control">
+                                    <input class="input" type="number" id="numero" required>
+                                </div>
+                            </div>
+
+                            <!-- Dropdown para Zona -->
+                            <div class="field">
+                                <label class="label" for="idZona">Zona</label>
+                                <div class="control">
+                                    <div class="select is-fullwidth">
+                                        <select id="idZona" required>
+                                            <option value="">Cargando zonas...</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <label class="label" for="lecturaContadorLuz">Lectura Contador Luz</label>
+                                <div class="control">
+                                    <input class="input" type="number" id="lecturaContadorLuz" placeholder="Opcional">
+                                </div>
+                            </div>
+
+                            <!-- Checkbox para Servicios -->
+                            <div class="field">
+                                <div class="control">
+                                    <label class="checkbox">
+                                        <input type="checkbox" id="tieneServiciosContratados">
+                                        ¿Tiene servicios contratados?
+                                    </label>
+                                </div>
+                            </div>
+
+                        </form>
+                        <div id="modalErrorMessage" class="notification is-danger is-light mt-3" style="display: none;"></div>
+                    </section>
+                    <footer class="modal-card-foot is-justify-content-flex-end">
+                        <button class="button is-success" id="btnGuardar">Guardar Cambios</button>
+                        <button class="button" id="btnCancelar">Cancelar</button>
+                    </footer>
+                </div>
+            </div>
+
+            <!-- Modal CONFIRMACIÓN (ELIMINAR) -->
+            <div class="modal" id="deleteModal">
+                <div class="modal-background"></div>
+                <div class="modal-card">
+                    <header class="modal-card-head has-background-danger">
+                        <p class="modal-card-title has-text-white">Confirmar Eliminación</p>
+                        <button class="delete" aria-label="close"></button>
+                    </header>
+                    <section class="modal-card-body">
+                        <p>¿Estás seguro de que deseas eliminar el garage <strong id="deleteGarageNameText"></strong>?</p>
+                        <p><strong>Esta acción no se puede deshacer.</strong></p>
+                        <input type="hidden" id="garageIdParaEliminar">
+                    </section>
+                    <footer class="modal-card-foot is-justify-content-flex-end">
+                        <button class="button is-danger" id="btnConfirmarEliminar">Eliminar</button>
+                        <button class="button" id="btnCancelarEliminar">Cancelar</button>
+                    </footer>
+                </div>
+            </div>
+
+            <!-- =======================
+                 JAVASCRIPT
+            ======================== -->
+            <script th:inline="javascript">
+                /*<![CDATA[*/
+
+                const API_URL = /*[[@{/api/garages}]]*/ '/api/garages';
+                const API_ZONAS = /*[[@{/api/zonas}]]*/ '/api/zonas'; // API de dependencia
+
+                // --- DOM Elements ---
+                const tableBody = document.getElementById('garagesTableBody');
+                const garageModal = document.getElementById('garageModal');
+                const modalTitle = document.getElementById('modalTitle');
+                const garageForm = document.getElementById('garageForm');
+                const garageIdInput = document.getElementById('garageId');
+                const modalErrorMessage = document.getElementById('modalErrorMessage');
+                const btnGuardar = document.getElementById('btnGuardar');
+                const deleteModal = document.getElementById('deleteModal');
+                const garageIdParaEliminarInput = document.getElementById('garageIdParaEliminar');
+                const deleteGarageNameText = document.getElementById('deleteGarageNameText');
+                const btnConfirmarEliminar = document.getElementById('btnConfirmarEliminar');
+                const notification = document.getElementById('notification');
+                const notificationMessage = document.getElementById('notificationMessage');
+                const selectZona = document.getElementById('idZona');
+
+                // --- Funciones de UI ---
+                function showNotification(message, isError = false) {
+                    notificationMessage.textContent = message;
+                    notification.className = 'notification';
+                    notification.classList.add(isError ? 'is-danger' : 'is-success', 'is-light');
+                    notification.style.display = 'block';
+                    setTimeout(() => notification.style.display = 'none', 3000);
+                }
+
+                /**
+                 * Carga las Zonas en el dropdown del formulario
+                 */
+                async function cargarDropdownZonas() {
+                    try {
+                        const response = await fetch(API_ZONAS);
+                        if (!response.ok)
+                            throw new Error('No se pudieron cargar las zonas');
+                        const zonas = await response.json();
+                        selectZona.innerHTML = '<option value="">Seleccione una zona</option>';
+                        zonas.forEach(zona => {
+                            selectZona.innerHTML += `<option value="${zona.idZona}">Zona ${zona.letra} (${zona.tipoVehiculo.denominacion})</option>`;
+                        });
+                    } catch (error) {
+                        console.error('Error cargando dropdowns:', error);
+                        selectZona.innerHTML = `<option value="">Error al cargar zonas</option>`;
+                        showNotification(error.message, true);
+                    }
+                }
+
+                /**
+                 * Carga todos los garages desde la API
+                 */
+                async function cargarGarages() {
+                    try {
+                        const response = await fetch(API_URL);
+                        if (!response.ok)
+                            throw new Error(`Error ${response.status}: ${await response.text()}`);
+                        const garages = await response.json();
+
+                        if (garages.length === 0) {
+                            tableBody.innerHTML = '<tr><td colspan="6" class="has-text-centered">No se encontraron garages.</td></tr>';
+                            return;
+                        }
+
+                        tableBody.innerHTML = garages.map(g => `
+                            <tr>
+                                <td>${g.idGarage}</td>
+                                <td><strong>Nº ${g.numero}</strong></td>
+                                <td>Zona ${g.zona.letra}</td>
+                                <td>${g.tieneServiciosContratados ?
+                                    '<span class="tag is-success is-light">Sí</span>' :
+                                    '<span class="tag is-danger is-light">No</span>'}
+                                </td>
+                                <td>${g.lecturaContadorLuz || 'N/A'}</td>
+                                <td>
+                                    <button class="button is-small is-info" onclick="abrirModalEditar(${g.idGarage})">
+                                        <span class="icon"><i class="fas fa-edit"></i></span>
+                                    </button>
+                                    <button class="button is-small is-danger" onclick="abrirModalEliminar(${g.idGarage}, '${g.numero}')">
+                                        <span class="icon"><i class="fas fa-trash"></i></span>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('');
+
+                    } catch (error) {
+                        console.error('Error en cargarGarages:', error);
+                        tableBody.innerHTML = `<tr><td colspan="6" class="has-text-centered has-text-danger">${error.message}</td></tr>`;
+                        showNotification(error.message, true);
+                    }
+                }
+
+                // --- Funciones de Modales ---
+
+                function abrirModalCrear() {
+                    garageForm.reset();
+                    garageIdInput.value = '';
+                    modalTitle.textContent = 'Crear Nuevo Garage';
+                    modalErrorMessage.style.display = 'none';
+                    selectZona.value = "";
+                    document.getElementById('tieneServiciosContratados').checked = false;
+                    garageModal.classList.add('is-active');
+                }
+
+                async function abrirModalEditar(id) {
+                    try {
+                        const response = await fetch(`${API_URL}/${id}`);
+                        if (!response.ok)
+                            throw new Error('No se pudo cargar el garage.');
+                        const g = await response.json();
+
+                        garageIdInput.value = g.idGarage;
+                        document.getElementById('numero').value = g.numero;
+                        document.getElementById('lecturaContadorLuz').value = g.lecturaContadorLuz || '';
+                        document.getElementById('tieneServiciosContratados').checked = g.tieneServiciosContratados;
+                        selectZona.value = g.zona.idZona; // Asigna la zona
+
+                        modalTitle.textContent = 'Editar Garage';
+                        modalErrorMessage.style.display = 'none';
+                        garageModal.classList.add('is-active');
+                    } catch (error) {
+                        console.error('Error en abrirModalEditar:', error);
+                        showNotification(error.message, true);
+                    }
+                }
+
+                function cerrarModal() {
+                    garageModal.classList.remove('is-active');
+                }
+
+                async function guardarGarage(event) {
+                    event.preventDefault();
+                    const id = garageIdInput.value;
+                    const esNuevo = id === '';
+                    const method = esNuevo ? 'POST' : 'PUT';
+                    const url = esNuevo ? API_URL : `${API_URL}/${id}`;
+
+                    btnGuardar.classList.add('is-loading');
+                    modalErrorMessage.style.display = 'none';
+
+                    const garageDTO = {
+                        numero: parseInt(document.getElementById('numero').value),
+                        lecturaContadorLuz: parseInt(document.getElementById('lecturaContadorLuz').value) || null,
+                        tieneServiciosContratados: document.getElementById('tieneServiciosContratados').checked,
+                        idZona: parseInt(selectZona.value)
+                    };
+
+                    // Validación simple de frontend
+                    if (!garageDTO.idZona) {
+                        modalErrorMessage.textContent = "Debe seleccionar una zona.";
+                        modalErrorMessage.style.display = 'block';
+                        btnGuardar.classList.remove('is-loading');
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(url, {
+                            method: method,
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(garageDTO)
+                        });
+                        if (!response.ok) {
+                            const errorMsg = await response.text();
+                            throw new Error(errorMsg || 'Error al guardar el garage.');
+                        }
+                        cerrarModal();
+                        await cargarGarages();
+                        showNotification(`Garage ${esNuevo ? 'creado' : 'actualizado'} exitosamente.`, false);
+                    } catch (error) {
+                        console.error('Error en guardarGarage:', error);
+                        modalErrorMessage.textContent = error.message;
+                        modalErrorMessage.style.display = 'block';
+                    } finally {
+                        btnGuardar.classList.remove('is-loading');
+                    }
+                }
+
+                function abrirModalEliminar(id, numero) {
+                    garageIdParaEliminarInput.value = id;
+                    deleteGarageNameText.textContent = `Nº ${numero}`;
+                    deleteModal.classList.add('is-active');
+                }
+
+                function cerrarModalEliminar() {
+                    deleteModal.classList.remove('is-active');
+                }
+
+                async function confirmarEliminacion() {
+                    const id = garageIdParaEliminarInput.value;
+                    btnConfirmarEliminar.classList.add('is-loading');
+                    try {
+                        const response = await fetch(`${API_URL}/${id}`, {method: 'DELETE'});
+                        if (!response.ok) {
+                            const errorMsg = await response.text();
+                            throw new Error(errorMsg || 'Error al eliminar.');
+                        }
+                        cerrarModalEliminar();
+                        await cargarGarages();
+                        showNotification('Garage eliminado exitosamente.', false);
+                    } catch (error) {
+                        console.error('Error en confirmarEliminacion:', error);
+                        showNotification(error.message, true);
+                    } finally {
+                        btnConfirmarEliminar.classList.remove('is-loading');
+                    }
+                }
+
+                // --- Event Listeners Globales ---
+                document.addEventListener('DOMContentLoaded', () => {
+                    cargarGarages();
+                    cargarDropdownZonas();
+                });
+
+                document.getElementById('btnNuevoGarage').addEventListener('click', abrirModalCrear);
+                btnGuardar.addEventListener('click', guardarGarage);
+                btnConfirmarEliminar.addEventListener('click', confirmarEliminacion);
+
+                (document.querySelectorAll('.modal-background, .modal .delete, #btnCancelar, #btnCancelarEliminar') || []).forEach(($close) => {
+                    const $target = $close.closest('.modal');
+                    $close.addEventListener('click', () => $target.classList.remove('is-active'));
+                });
+
+                (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+                    const $notification = $delete.parentNode;
+                    $delete.addEventListener('click', () => $notification.style.display = 'none');
+                });
+
+                /*]]>*/
+            </script>
+        </section>
+    </body>
+</html>

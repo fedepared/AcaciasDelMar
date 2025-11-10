@@ -1,6 +1,7 @@
 package com.acacias_del_mar.controllers.BackEnd;
 
 import com.acacias_del_mar.DTOs.CompraGarageDTO;
+import com.acacias_del_mar.DTOs.CompraGarageResponseDTO;
 import com.acacias_del_mar.entities.CompraGarage;
 import com.acacias_del_mar.services.CompraGarage.CompraGarageService;
 import jakarta.validation.Valid;
@@ -21,13 +22,13 @@ public class CompraGarageRestController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SOCIO')")
-    public ResponseEntity<List<CompraGarageDTO>> obtenerTodas() {
+    public ResponseEntity<List<CompraGarageResponseDTO>> obtenerTodas() {
         return ResponseEntity.ok(service.obtenerTodas());
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SOCIO')")
-    public ResponseEntity<CompraGarageDTO> obtenerPorId(@PathVariable Integer id) {
+    public ResponseEntity<CompraGarageResponseDTO> obtenerPorId(@PathVariable Integer id) {
         return service.obtenerPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -37,7 +38,7 @@ public class CompraGarageRestController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> crearCompraGarage(@Valid @RequestBody CompraGarageDTO dto) {
         try {
-            CompraGarageDTO compraCreada = service.crearCompraGarage(dto);
+            CompraGarageResponseDTO compraCreada = service.crearCompraGarage(dto);
             return new ResponseEntity<>(compraCreada, HttpStatus.CREATED);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -48,7 +49,7 @@ public class CompraGarageRestController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> actualizarCompraGarage(@PathVariable Integer id, @Valid @RequestBody CompraGarageDTO dto) {
         try {
-            CompraGarageDTO compraActualizada = service.actualizarCompraGarage(id, dto);
+            CompraGarageResponseDTO compraActualizada = service.actualizarCompraGarage(id, dto);
             return ResponseEntity.ok(compraActualizada);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
